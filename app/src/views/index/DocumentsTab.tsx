@@ -10,6 +10,8 @@ import EditByFunctionDialog from "./EditByFunctionDialog";
 
 const PAGE = 100;
 const MAX_COLS = 40;
+/** Pages kept in memory (~2,400 rows). Far-away pages are evicted and re-fetched on demand. */
+const MAX_PAGES = 24;
 
 type Doc = Record<string, unknown>;
 
@@ -32,6 +34,7 @@ export default function DocumentsTab(props: { uid: string }) {
   let pages = new Map<number, Doc[]>();
   let inflight = new Set<number>();
   let generation = 0;
+  let centerPage = 0;
 
   const body = (offset: number, limit: number) => {
     const q = query();
@@ -56,6 +59,12 @@ export default function DocumentsTab(props: { uid: string }) {
       });
       if (gen !== generation) return;
       pages.set(p, res.results);
+      // Bounded cache: drop the pages farthest from where the user is looking.
+      while (pages.size > MAX_PAGES) {
+        let far = -1;
+        for (const k of pages.keys()) if (k !== selectedPage() && (far < 0 || Math.abs(k - centerPage) > Math.abs(far - centerPage))) far = k;
+        pages.delete(far);
+      }
       setTotal(res.total);
       setError(undefined);
       if (columnKeys().length === 0 && res.results.length) setColumnKeys(inferColumns(res.results, primaryKey()));
@@ -86,7 +95,12 @@ export default function DocumentsTab(props: { uid: string }) {
   };
 
   const onRange = (start: number, end: number) => {
+    centerPage = Math.floor((start + end) / 2 / PAGE);
     for (let p = Math.floor(start / PAGE); p <= Math.floor(end / PAGE); p++) loadPage(p);
+  };
+  const selectedPage = () => {
+    const i = selected();
+    return i === undefined ? -1 : Math.floor(i / PAGE);
   };
 
   const columns = createMemo<Column<Doc>[]>(() =>

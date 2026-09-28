@@ -12,8 +12,15 @@ A native desktop admin app for [Meilisearch](https://www.meilisearch.com), in th
 - **Index info:** stats, field distribution, rename, change primary key, swap, compact, delete
 - **Tasks and batches:** live list, filters, cancel/delete by filter, task payloads
 - **API keys:** create/edit/delete with an action picker; tenant tokens signed locally
-- **Webhooks and experimental features**
+- **Tasks and batches, live:** server-sent events push updates (polling fallback), batch progress bars, task-queue compaction
+- **Multi-search:** federated and per-index queries
+- **Search rules:** dynamic search rules (pin / boost / demote)
+- **Chats:** chat workspaces, settings and a streaming playground
+- **Operations:** metrics dashboard (Prometheus), live logs, export to another instance, webhooks, experimental features, MCP endpoint check
+- **Local instances:** download the official Meilisearch binary (SHA-256 verified), run multiple instances with their own port, data dir, master key (in the OS keychain) and launch flags (the editor is generated from `meilisearch --help`), live logs, one-click connect, in-place database upgrade after binary updates
 - **API console:** every operation in the OpenAPI spec (143 in v1.54), including streaming routes
+
+**Coverage:** 140/143 operations have a dedicated screen. The other 3 are Enterprise-only (sharding) and reachable from the console. See `npm run coverage`.
 
 ## Development
 
