@@ -3,6 +3,7 @@ import { api, notifyError } from "../state/app";
 import VirtualTable, { Column } from "../components/VirtualTable";
 import JsonEditor from "../components/JsonEditor";
 import { formatDate, formatNumber, pretty } from "../components/ui";
+import { liveSse, streamSse } from "../lib/sse";
 
 interface Batch {
   uid: number;
@@ -45,8 +46,26 @@ export default function BatchesView() {
     }
   };
   onMount(load);
-  const timer = setInterval(() => batches().length <= 200 && load(), 3000);
-  onCleanup(() => clearInterval(timer));
+  const [mode, setMode] = createSignal<"stream" | "polling">("stream");
+  const upsert = (b: Batch) => {
+    setBatches((list) => {
+      const i = list.findIndex((x) => x.uid === b.uid);
+      if (i < 0) return [b, ...list];
+      const copy = list.slice();
+      copy[i] = b;
+      return copy;
+    });
+    if (detail()?.uid === b.uid) setDetail(b);
+  };
+  const stop = liveSse(
+    (signal) => streamSse(api(), "GET", "/batches/stream", { onData: (d) => upsert(JSON.parse(d)) }, { signal }),
+    () => setMode("polling"),
+  );
+  const timer = setInterval(() => mode() === "polling" && batches().length <= 200 && load(), 3000);
+  onCleanup(() => {
+    stop();
+    clearInterval(timer);
+  });
 
   const select = async (i: number) => {
     setSelected(i);
@@ -60,6 +79,23 @@ export default function BatchesView() {
   const columns: Column<Batch>[] = [
     { key: "uid", title: "UID", width: 80 },
     { key: "tasks", title: "Tasks", width: 80, render: (b) => formatNumber(b.stats?.totalNbTasks) },
+    {
+      key: "progress",
+      title: "Progress",
+      width: 220,
+      render: (b) => {
+        const p = b.progress as { percentage: number; steps: { currentStep: string }[] } | null;
+        if (!p) return b.finishedAt ? <span class="muted">done</span> : <span class="muted">—</span>;
+        return (
+          <span class="progress" title={p.steps.map((s) => s.currentStep).join(" › ")}>
+            <span class="progress-bar" style={{ width: `${p.percentage}%` }} />
+            <span class="progress-label">
+              {p.percentage.toFixed(0)}% · {p.steps[p.steps.length - 1]?.currentStep}
+            </span>
+          </span>
+        );
+      },
+    },
     { key: "status", title: "Status", width: 200, render: (b) => fmtCounts(b.stats?.status) },
     { key: "types", title: "Types", width: 280, render: (b) => fmtCounts(b.stats?.types) },
     { key: "indexes", title: "Indexes", width: 200, render: (b) => fmtCounts(b.stats?.indexUids) },
@@ -73,6 +109,7 @@ export default function BatchesView() {
       <div class="page-head">
         <h2>Batches</h2>
         <span class="muted">{formatNumber(total())} total</span>
+        <span class="muted small">{mode() === "stream" ? "● streaming" : "○ polling"}</span>
         <span class="grow" />
         <button onClick={load}>↻</button>
       </div>

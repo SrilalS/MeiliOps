@@ -27,7 +27,8 @@ function walk(dir) {
 const covered = new Set();
 for (const file of walk(join(root, "src"))) {
   const src = readFileSync(file, "utf8");
-  for (const m of src.matchAll(/req(?:<.+?>)?\(\s*"(GET|POST|PUT|PATCH|DELETE)",\s*"([^"]+)"/g)) covered.add(`${m[1]} ${m[2]}`);
+  // Any `"METHOD", "/path"` literal pair: req(...), streamSse(m, "GET", "/tasks/stream"), etc.
+  for (const m of src.matchAll(/"(GET|POST|PUT|PATCH|DELETE)",\s*"(\/[^"]*)"/g)) covered.add(`${m[1]} ${m[2]}`);
   for (const m of src.matchAll(/setting\(\s*"[^"]+",\s*"(PUT|PATCH)",\s*"([a-z-]+)"/g)) {
     const p = `/indexes/{index_uid}/settings/${m[2]}`;
     ["GET", m[1], "DELETE"].forEach((verb) => covered.add(`${verb} ${p}`));
@@ -35,6 +36,18 @@ for (const file of walk(join(root, "src"))) {
   // The "All settings" entry in SettingsTab uses the parent route dynamically.
   if (/key === "\*" \? "\/indexes\/\{index_uid\}\/settings"/.test(src)) ["GET", "PATCH", "DELETE"].forEach((v) => covered.add(`${v} /indexes/{index_uid}/settings`));
 }
+
+// GET twins of POST routes: same capability, different transport. The UI uses the POST form.
+const EQUIVALENT = {
+  "GET /indexes/{index_uid}/search": "POST /indexes/{index_uid}/search",
+  "GET /indexes/{index_uid}/similar": "POST /indexes/{index_uid}/similar",
+  "GET /indexes/{index_uid}/documents": "POST /indexes/{index_uid}/documents/fetch",
+};
+for (const [twin, main] of Object.entries(EQUIVALENT)) if (covered.has(main)) covered.add(twin);
+
+// Enterprise-edition only (sharding/replication) — out of scope by product decision; console only.
+const ENTERPRISE = new Set(["GET /network", "PATCH /network", "POST /network/control"]);
+for (const o of all) if (ENTERPRISE.has(o.id)) o.enterprise = true;
 
 const known = new Set(all.map((o) => o.id));
 const unknown = [...covered].filter((c) => !known.has(c));
@@ -47,10 +60,10 @@ const byTag = {};
 for (const o of missing) (byTag[o.tag] ??= []).push(o);
 for (const [tag, list] of Object.entries(byTag).sort()) {
   console.log(`  ${tag}`);
-  for (const o of list) console.log(`    ${o.id}${o.experimental ? "  (experimental)" : ""}`);
+  for (const o of list) console.log(`    ${o.id}${o.enterprise ? "  (enterprise, out of scope)" : o.experimental ? "  (experimental)" : ""}`);
 }
 if (unknown.length) {
   console.log(`\n⚠ Calls to routes NOT in the spec (renamed/removed upstream?):`);
   unknown.forEach((u) => console.log(`    ${u}`));
 }
-if (process.argv.includes("--strict") && (missing.some((o) => !o.experimental) || unknown.length)) process.exit(1);
+if (process.argv.includes("--strict") && (missing.some((o) => !o.experimental && !o.enterprise) || unknown.length)) process.exit(1);

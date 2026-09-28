@@ -7,6 +7,57 @@
   ],
   "permissions": [
     "core:default",
-    "store:default"
+    "core:window:allow-destroy",
+    "store:default",
+    "os:default",
+    "upload:allow-download",
+    "shell:allow-kill",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "meilisearch-win",
+          "cmd": "$APPLOCALDATA/bin/meilisearch.exe",
+          "args": true
+        },
+        {
+          "name": "meilisearch",
+          "cmd": "$APPLOCALDATA/bin/meilisearch",
+          "args": true
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "meilisearch-win",
+          "cmd": "$APPLOCALDATA/bin/meilisearch.exe",
+          "args": true
+        },
+        {
+          "name": "meilisearch",
+          "cmd": "$APPLOCALDATA/bin/meilisearch",
+          "args": true
+        }
+      ]
+    },
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "http://*"
+        },
+        {
+          "url": "http://*:*"
+        },
+        {
+          "url": "https://*"
+        },
+        {
+          "url": "https://*:*"
+        }
+      ]
+    }
   ]
 }

@@ -18,6 +18,10 @@ export interface ReqOpts {
   signal?: AbortSignal;
   /** Return the raw Response (for streams / non-JSON payloads). */
   raw?: boolean;
+  /** Extra request headers. */
+  headers?: Record<string, string>;
+  /** Alternative fetch implementation (e.g. Tauri's native HTTP client). */
+  fetch?: typeof fetch;
 }
 
 export class MeiliError extends Error {
@@ -110,9 +114,9 @@ export class Meili {
         contentType = "application/json";
       }
     }
-    const res = await fetch(this.resolve(path, opts), {
+    const res = await (opts.fetch ?? fetch)(this.resolve(path, opts), {
       method,
-      headers: this.headers(contentType),
+      headers: { ...this.headers(contentType), ...opts.headers },
       body,
       signal: opts.signal,
     });

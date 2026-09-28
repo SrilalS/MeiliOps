@@ -1,6 +1,6 @@
 import { For, Show, createResource, createSignal } from "solid-js";
 import { api, notify, notifyError } from "../state/app";
-import { Confirm, Modal, Spinner, pretty } from "../components/ui";
+import { ApiError, Confirm, Modal, Spinner, pretty } from "../components/ui";
 import JsonEditor from "../components/JsonEditor";
 
 interface Webhook {
@@ -50,7 +50,7 @@ export default function WebhooksView() {
           + New webhook
         </button>
       </div>
-      <Show when={!hooks.error} fallback={<div class="err">{String(hooks.error?.message ?? hooks.error)}</div>}>
+      <Show when={!hooks.error} fallback={<ApiError error={hooks.error} />}>
         <Show when={hooks()} fallback={<Spinner />}>
           <table class="grid">
             <thead>

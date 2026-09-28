@@ -1,6 +1,6 @@
 import { For, Show, createResource, createSignal } from "solid-js";
 import { api, indexes, notify, notifyError } from "../state/app";
-import { Confirm, Modal, Spinner, formatDate, pretty } from "../components/ui";
+import { ApiError, Confirm, Modal, Spinner, formatDate, pretty } from "../components/ui";
 import JsonEditor from "../components/JsonEditor";
 import { copyText } from "../lib/platform";
 import { signTenantToken } from "../lib/tenantToken";
@@ -55,7 +55,7 @@ export default function KeysView() {
           + New key
         </button>
       </div>
-      <Show when={!keys.error} fallback={<div class="err">{String(keys.error?.message ?? keys.error)} — managing keys requires the master key.</div>}>
+      <Show when={!keys.error} fallback={<ApiError error={keys.error} />}>
         <Show when={keys()} fallback={<Spinner />}>
           <table class="grid">
             <thead>

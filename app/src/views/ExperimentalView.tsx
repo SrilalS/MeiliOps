@@ -1,6 +1,6 @@
 import { For, Show, createResource } from "solid-js";
 import { api, notify, notifyError } from "../state/app";
-import { Spinner } from "../components/ui";
+import { ApiError, Spinner } from "../components/ui";
 
 export default function ExperimentalView() {
   const [features, { mutate }] = createResource(() => api().req<Record<string, unknown>>("GET", "/experimental-features"));
@@ -21,7 +21,7 @@ export default function ExperimentalView() {
         <h2>Experimental features</h2>
       </div>
       <p class="muted small">Runtime feature flags. Experimental APIs can change or disappear between Meilisearch releases. Some flags can only be set at launch (CLI / env).</p>
-      <Show when={!features.error} fallback={<div class="err">{String(features.error?.message ?? features.error)}</div>}>
+      <Show when={!features.error} fallback={<ApiError error={features.error} />}>
         <Show when={features()} fallback={<Spinner />}>
           <div class="flag-list">
             <For each={Object.entries(features()!).sort(([a], [b]) => a.localeCompare(b))}>

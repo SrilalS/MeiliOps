@@ -2,8 +2,9 @@ import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 import { ApiPath } from "../../api/meili";
 import { api, notify, trackTask } from "../../state/app";
 import JsonEditor from "../../components/JsonEditor";
-import { Confirm, Spinner, pretty } from "../../components/ui";
+import { ApiError, Confirm, Spinner, pretty } from "../../components/ui";
 import { SETTINGS, SettingDef } from "./settingsCatalog";
+import RenderTemplateDialog from "./RenderTemplateDialog";
 
 const ALL: SettingDef = { key: "*", slug: "", method: "PATCH", group: "", label: "All settings (JSON)", help: "The full settings object. Only changed keys are sent (PATCH)." };
 
@@ -12,6 +13,7 @@ export default function SettingsTab(props: { uid: string }) {
   const [confirm, setConfirm] = createSignal<"reset" | "reset-all">();
   const [text, setText] = createSignal("");
   const [busy, setBusy] = createSignal(false);
+  const [templateTest, setTemplateTest] = createSignal(false);
 
   const path = (s: SettingDef) => (s.key === "*" ? "/indexes/{index_uid}/settings" : `/indexes/{index_uid}/settings/${s.slug}`) as ApiPath;
 
@@ -94,7 +96,7 @@ export default function SettingsTab(props: { uid: string }) {
           </div>
         </div>
         <Show when={!server.loading || server()} fallback={<Spinner />}>
-          <Show when={!server.error} fallback={<div class="err">{String(server.error?.message ?? server.error)}</div>}>
+          <Show when={!server.error} fallback={<ApiError error={server.error} />}>
             <div class="editor-box fill">
               <JsonEditor value={text()} onChange={setText} original={server()} onSubmit={apply} />
             </div>
@@ -111,11 +113,22 @@ export default function SettingsTab(props: { uid: string }) {
           <Show when={dirty()}>
             <span class="warn small">Unsaved changes (highlighted)</span>
           </Show>
+          <Show when={current().key === "embedders" || current().key === "chat"}>
+            <button onClick={() => setTemplateTest(true)}>Test template…</button>
+          </Show>
           <button class="danger" onClick={() => setConfirm(current().key === "*" ? "reset-all" : "reset")}>
             {current().key === "*" ? "Reset ALL settings" : "Reset to default"}
           </button>
         </div>
       </section>
+      <Show when={templateTest()}>
+        <RenderTemplateDialog
+          uid={props.uid}
+          kind={current().key === "chat" ? "chatDocumentTemplate" : "documentTemplate"}
+          embedder={current().key === "embedders" ? firstKey(server()) : undefined}
+          onClose={() => setTemplateTest(false)}
+        />
+      </Show>
       <Show when={confirm() === "reset"}>
         <Confirm
           title={`Reset ${current().label}`}
@@ -137,6 +150,14 @@ export default function SettingsTab(props: { uid: string }) {
       </Show>
     </div>
   );
+}
+
+function firstKey(json: string | undefined): string | undefined {
+  try {
+    return Object.keys(JSON.parse(json ?? "{}"))[0];
+  } catch {
+    return undefined;
+  }
 }
 
 function normalize(s: string) {

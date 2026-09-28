@@ -6,6 +6,7 @@ import { Confirm, Spinner, formatNumber, pretty } from "../../components/ui";
 import { copyText, downloadText } from "../../lib/platform";
 import AddDocumentsDialog from "./AddDocumentsDialog";
 import DeleteByIdsDialog from "./DeleteByIdsDialog";
+import EditByFunctionDialog from "./EditByFunctionDialog";
 
 const PAGE = 100;
 const MAX_COLS = 40;
@@ -24,7 +25,7 @@ export default function DocumentsTab(props: { uid: string }) {
   const [columnKeys, setColumnKeys] = createSignal<string[]>([]);
   const [selected, setSelected] = createSignal<number>();
   const [editText, setEditText] = createSignal("");
-  const [dialog, setDialog] = createSignal<"add" | "delete-ids" | "delete-filter" | "delete-all" | "delete-one">();
+  const [dialog, setDialog] = createSignal<"add" | "edit-fn" | "delete-ids" | "delete-filter" | "delete-all" | "delete-one">();
   const [exporting, setExporting] = createSignal(false);
 
   // Page cache. `generation` invalidates in-flight requests when the query changes.
@@ -131,6 +132,15 @@ export default function DocumentsTab(props: { uid: string }) {
     );
   };
 
+  const reloadDoc = async () => {
+    try {
+      const d = await api().req<Doc>("GET", "/indexes/{index_uid}/documents/{document_id}", { path: { index_uid: props.uid, document_id: docId()! } });
+      setEditText(pretty(d));
+    } catch (e) {
+      notifyError(e, "Reload document");
+    }
+  };
+
   const exportAll = async () => {
     setExporting(true);
     try {
@@ -185,8 +195,9 @@ export default function DocumentsTab(props: { uid: string }) {
           {exporting() ? "Exporting…" : "Export JSON"}
         </button>
         <details class="menu">
-          <summary>Delete ▾</summary>
+          <summary>More ▾</summary>
           <div class="menu-items">
+            <button onClick={() => setDialog("edit-fn")}>Edit with function… (experimental)</button>
             <button onClick={() => setDialog("delete-ids")}>Delete by IDs…</button>
             <button disabled={!query().filter.trim()} onClick={() => setDialog("delete-filter")}>
               Delete matching current filter…
@@ -234,6 +245,9 @@ export default function DocumentsTab(props: { uid: string }) {
                 Save
               </button>
               <button onClick={() => copyText(editText())}>Copy</button>
+              <button disabled={docId() === undefined} onClick={reloadDoc} title="Fetch this document again from the server">
+                Reload
+              </button>
               <span class="grow" />
               <button class="danger" disabled={docId() === undefined} onClick={() => setDialog("delete-one")}>
                 Delete
@@ -245,6 +259,9 @@ export default function DocumentsTab(props: { uid: string }) {
 
       <Show when={dialog() === "add"}>
         <AddDocumentsDialog uid={props.uid} onClose={() => setDialog(undefined)} onDone={afterWrite} />
+      </Show>
+      <Show when={dialog() === "edit-fn"}>
+        <EditByFunctionDialog uid={props.uid} filter={query().filter} onClose={() => setDialog(undefined)} onDone={afterWrite} />
       </Show>
       <Show when={dialog() === "delete-ids"}>
         <DeleteByIdsDialog uid={props.uid} onClose={() => setDialog(undefined)} onDone={afterWrite} />

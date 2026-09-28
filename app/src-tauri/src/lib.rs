@@ -1,6 +1,9 @@
-// Native shell. The whole app is TypeScript; this file only exposes the OS
-// credential store (Windows Credential Manager / macOS Keychain / Secret Service)
-// so API keys never land in plain-text config.
+// Native shell. The whole app is TypeScript; the only custom native code is:
+// - the OS credential store (Windows Credential Manager / macOS Keychain / Secret Service)
+//   so API keys never land in plain-text config
+// - `files.rs`: sandboxed file ops for the local instance manager
+
+mod files;
 
 const SERVICE: &str = "io.meiliops.app";
 
@@ -32,7 +35,20 @@ fn secret_delete(account: String) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![secret_set, secret_get, secret_delete])
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_upload::init())
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_http::init())
+        .invoke_handler(tauri::generate_handler![
+            secret_set,
+            secret_get,
+            secret_delete,
+            files::app_path_exists,
+            files::app_ensure_dir,
+            files::app_remove,
+            files::app_replace_file,
+            files::app_sha256
+        ])
         .run(tauri::generate_context!())
         .expect("error while running MeiliOps");
 }

@@ -40,7 +40,14 @@ export type View =
   | { kind: "keys" }
   | { kind: "webhooks" }
   | { kind: "experimental" }
-  | { kind: "console" };
+  | { kind: "console" }
+  | { kind: "multi-search" }
+  | { kind: "logs" }
+  | { kind: "metrics" }
+  | { kind: "export" }
+  | { kind: "chats" }
+  | { kind: "search-rules" }
+  | { kind: "instances" };
 
 export interface Activity {
   id: number;

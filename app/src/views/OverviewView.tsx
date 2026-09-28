@@ -1,12 +1,48 @@
-import { For, Show, createResource } from "solid-js";
-import { api, refreshIndexes, server, setView, trackTask } from "../state/app";
-import { Spinner, Stat, formatBytes, formatDate, formatNumber } from "../components/ui";
+import { For, Show, createResource, createSignal } from "solid-js";
+import { api, notify, refreshIndexes, server, setView, trackTask } from "../state/app";
+import { errorMessage } from "../api/meili";
+import { copyText } from "../lib/platform";
+import { ApiError, Spinner, Stat, formatBytes, formatDate, formatNumber } from "../components/ui";
 
 interface GlobalStats {
   databaseSize: number;
   usedDatabaseSize?: number;
   lastUpdate: string | null;
   indexes: Record<string, { numberOfDocuments: number; isIndexing: boolean; fieldDistribution: Record<string, number>; numberOfEmbeddedDocuments?: number; numberOfEmbeddings?: number }>;
+}
+
+/** The /mcp endpoint lets LLM clients (Claude, Cursor, …) use this server as a tool. */
+function McpCard() {
+  const [result, setResult] = createSignal<{ ok: boolean; text: string }>();
+  const url = () => `${api().url}/mcp`;
+  const test = async () => {
+    try {
+      const r = await api().req<Response>("POST", "/mcp", {
+        raw: true,
+        body: { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "MeiliOps", version: "0.1" } } },
+      });
+      const text = await r.text();
+      const m = text.match(/"serverInfo"\s*:\s*\{[^}]*\}/);
+      setResult({ ok: true, text: m ? m[0] : text.slice(0, 200) });
+    } catch (e) {
+      setResult({ ok: false, text: errorMessage(e) });
+    }
+  };
+  return (
+    <div class="card">
+      <div class="row">
+        <div class="grow">
+          <b>MCP endpoint</b> <code>{url()}</code>
+          <div class="muted small">Point an MCP client (Streamable HTTP) at this URL with an API key as a Bearer token to let an LLM search and manage this instance.</div>
+        </div>
+        <button onClick={() => copyText(url()).then(() => notify("info", "MCP URL copied"))}>Copy URL</button>
+        <button onClick={test}>Test</button>
+      </div>
+      <Show when={result()}>
+        <div class={`small mono ${result()!.ok ? "ok" : "err"}`}>{result()!.text}</div>
+      </Show>
+    </div>
+  );
 }
 
 export default function OverviewView() {
@@ -47,9 +83,11 @@ export default function OverviewView() {
         Commit {server().version?.commitSha?.slice(0, 10)} · {formatDate(server().version?.commitDate)}
       </div>
 
+      <McpCard />
+
       <h3>Indexes</h3>
       <Show when={!stats.loading} fallback={<Spinner />}>
-        <Show when={!stats.error} fallback={<div class="err">{String(stats.error?.message ?? stats.error)}</div>}>
+        <Show when={!stats.error} fallback={<ApiError error={stats.error} />}>
           <table class="grid">
             <thead>
               <tr>

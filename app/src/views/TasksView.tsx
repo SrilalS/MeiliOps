@@ -1,9 +1,10 @@
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { Task } from "../api/meili";
-import { api, indexes, notifyError, refreshIndexes, trackTask } from "../state/app";
+import { api, indexes, notify, notifyError, refreshIndexes, trackTask } from "../state/app";
 import VirtualTable, { Column } from "../components/VirtualTable";
 import JsonEditor from "../components/JsonEditor";
 import { Confirm, StatusPill, formatDate, formatNumber, pretty } from "../components/ui";
+import { liveSse, streamSse } from "../lib/sse";
 
 const STATUSES = ["enqueued", "processing", "succeeded", "failed", "canceled"];
 
@@ -17,7 +18,17 @@ export default function TasksView() {
   const [auto, setAuto] = createSignal(true);
   const [selected, setSelected] = createSignal<number>();
   const [payload, setPayload] = createSignal<string>();
-  const [confirm, setConfirm] = createSignal<"cancel" | "delete">();
+  const [confirm, setConfirm] = createSignal<"cancel" | "delete" | "compact">();
+
+  const compact = async () => {
+    try {
+      const r = await api().req<{ status: string; preSize?: string; postSize?: string; actionRequired?: string | null; errorMessage?: string | null }>("POST", "/tasks/compact");
+      if (r.errorMessage) notify("error", `Compaction: ${r.errorMessage}`);
+      else notify("success", `Task queue compacted ${r.preSize ?? ""} → ${r.postSize ?? ""}${r.actionRequired ? `. ${r.actionRequired}` : ""}`, 12000);
+    } catch (e) {
+      notifyError(e, "Compact task queue");
+    }
+  };
   let loadingMore = false;
 
   const filters = () => ({ statuses: status() || undefined, types: type() || undefined, indexUids: index() || undefined });
@@ -46,8 +57,35 @@ export default function TasksView() {
   };
 
   onMount(load);
-  const timer = setInterval(() => auto() && !loadingMore && tasks().length <= 200 && load(), 2000);
-  onCleanup(() => clearInterval(timer));
+
+  // Live updates: SSE stream when the server enables it, polling otherwise.
+  const [mode, setMode] = createSignal<"stream" | "polling">("stream");
+  const matches = (t: Task) =>
+    (!status() || status().split(",").includes(t.status)) && (!type() || type().split(",").map((s) => s.trim()).includes(t.type)) && (!index() || t.indexUid === index());
+  const upsert = (t: Task) => {
+    if (!auto()) return;
+    setTasks((list) => {
+      const i = list.findIndex((x) => x.uid === t.uid);
+      if (i >= 0) {
+        if (!matches(t)) return list.filter((x) => x.uid !== t.uid);
+        const copy = list.slice();
+        copy[i] = t;
+        return copy;
+      }
+      if (!matches(t)) return list;
+      setTotal((n) => (n ?? 0) + 1);
+      return [t, ...list];
+    });
+  };
+  const stop = liveSse(
+    (signal) => streamSse(api(), "GET", "/tasks/stream", { onData: (d) => upsert(JSON.parse(d)) }, { signal }),
+    () => setMode("polling"),
+  );
+  const timer = setInterval(() => mode() === "polling" && auto() && !loadingMore && tasks().length <= 200 && load(), 2000);
+  onCleanup(() => {
+    stop();
+    clearInterval(timer);
+  });
 
   const columns: Column<Task>[] = [
     { key: "uid", title: "UID", width: 80 },
@@ -90,6 +128,9 @@ export default function TasksView() {
         <label class="inline-label">
           <input type="checkbox" checked={auto()} onChange={(e) => setAuto(e.currentTarget.checked)} /> live
         </label>
+        <span class="muted small" title={mode() === "polling" ? "Start Meilisearch with --experimental-enable-tasks-streaming-route for push updates" : "Server-sent events"}>
+          {mode() === "stream" ? "● streaming" : "○ polling"}
+        </span>
         <button onClick={load}>↻</button>
       </div>
       <div class="toolbar">
@@ -107,6 +148,9 @@ export default function TasksView() {
           ))}
         </select>
         <span class="grow" />
+        <button onClick={() => setConfirm("compact")} title="Experimental: taskQueueCompactionRoute">
+          Compact queue…
+        </button>
         <button onClick={() => setConfirm("cancel")}>Cancel matching…</button>
         <button class="danger" onClick={() => setConfirm("delete")}>
           Delete matching…
@@ -141,7 +185,20 @@ export default function TasksView() {
           </div>
         </Show>
       </div>
-      <Show when={confirm()}>
+      <Show when={confirm() === "compact"}>
+        <Confirm
+          title="Compact task queue"
+          message={
+            <>
+              Defragments the task database. Experimental (<code>taskQueueCompactionRoute</code>). Afterwards Meilisearch reports unhealthy on <code>/health</code> until it is <b>restarted</b>.
+            </>
+          }
+          confirmText="Compact"
+          onClose={() => setConfirm(undefined)}
+          onConfirm={compact}
+        />
+      </Show>
+      <Show when={confirm() === "cancel" || confirm() === "delete"}>
         <Confirm
           title={confirm() === "cancel" ? "Cancel tasks" : "Delete tasks"}
           message={

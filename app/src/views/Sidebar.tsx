@@ -2,15 +2,38 @@ import { For, Show, createSignal } from "solid-js";
 import { activeId, connect, connections, indexes, refreshIndexes, server, setView, view, View } from "../state/app";
 import { formatNumber } from "../components/ui";
 import CreateIndexDialog from "./CreateIndexDialog";
+import { runningCount } from "../state/instances";
 
-const NAV: { kind: View["kind"]; label: string; icon: string }[] = [
-  { kind: "overview", label: "Overview", icon: "◎" },
-  { kind: "tasks", label: "Tasks", icon: "⏱" },
-  { kind: "batches", label: "Batches", icon: "▤" },
-  { kind: "keys", label: "API keys", icon: "⚿" },
-  { kind: "webhooks", label: "Webhooks", icon: "↗" },
-  { kind: "experimental", label: "Experimental", icon: "⚗" },
-  { kind: "console", label: "API console", icon: "›_" },
+type NavItem = { kind: View["kind"]; label: string; icon: string };
+const NAV: { group: string; items: NavItem[] }[] = [
+  {
+    group: "Server",
+    items: [
+      { kind: "overview", label: "Overview", icon: "◎" },
+      { kind: "tasks", label: "Tasks", icon: "⏱" },
+      { kind: "batches", label: "Batches", icon: "▤" },
+      { kind: "metrics", label: "Metrics", icon: "∿" },
+      { kind: "logs", label: "Logs", icon: "≡" },
+    ],
+  },
+  {
+    group: "Search",
+    items: [
+      { kind: "multi-search", label: "Multi-search", icon: "⧉" },
+      { kind: "search-rules", label: "Search rules", icon: "⇅" },
+      { kind: "chats", label: "Chats", icon: "✉" },
+    ],
+  },
+  {
+    group: "Admin",
+    items: [
+      { kind: "keys", label: "API keys", icon: "⚿" },
+      { kind: "webhooks", label: "Webhooks", icon: "↗" },
+      { kind: "export", label: "Export", icon: "⇪" },
+      { kind: "experimental", label: "Experimental", icon: "⚗" },
+      { kind: "console", label: "API console", icon: "›_" },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -27,6 +50,13 @@ export default function Sidebar() {
           <button class="icon-btn" title="New connection" onClick={() => setView({ kind: "connection-form" })}>
             +
           </button>
+        </div>
+        <div class="conn-item" classList={{ active: view().kind === "instances" }} onClick={() => setView({ kind: "instances" })} title="Run Meilisearch on this computer">
+          <span class="nav-icon">▣</span>
+          <span class="grow">Local instances</span>
+          <Show when={runningCount() > 0}>
+            <span class="pill status-succeeded">{runningCount()} running</span>
+          </Show>
         </div>
         <For each={connections} fallback={<div class="muted small pad">No connections yet</div>}>
           {(c) => (
@@ -49,13 +79,20 @@ export default function Sidebar() {
       </div>
 
       <Show when={connected()}>
-        <div class="sidebar-section">
+        <div class="sidebar-section nav-section">
           <For each={NAV}>
-            {(n) => (
-              <div class="nav-item" classList={{ active: view().kind === n.kind }} onClick={() => setView({ kind: n.kind } as View)}>
-                <span class="nav-icon">{n.icon}</span>
-                {n.label}
-              </div>
+            {(g) => (
+              <>
+                <div class="nav-group">{g.group}</div>
+                <For each={g.items}>
+                  {(n) => (
+                    <div class="nav-item" classList={{ active: view().kind === n.kind }} onClick={() => setView({ kind: n.kind } as View)}>
+                      <span class="nav-icon">{n.icon}</span>
+                      {n.label}
+                    </div>
+                  )}
+                </For>
+              </>
             )}
           </For>
         </div>

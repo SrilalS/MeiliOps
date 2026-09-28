@@ -1,6 +1,7 @@
-import { For, JSX, ParentProps, Show, createSignal, onCleanup, onMount } from "solid-js";
+import { ErrorBoundary, For, JSX, ParentProps, Show, createSignal, onCleanup, onMount } from "solid-js";
 import { Portal } from "solid-js/web";
-import { dismissToast, toasts } from "../state/app";
+import { dismissToast, setView, toasts } from "../state/app";
+import { MeiliError, errorMessage } from "../api/meili";
 
 export function Modal(props: ParentProps<{ title: string; onClose: () => void; actions?: JSX.Element; wide?: boolean }>) {
   const onKey = (e: KeyboardEvent) => e.key === "Escape" && props.onClose();
@@ -81,6 +82,46 @@ export function Toasts() {
       </For>
     </div>
   );
+}
+
+/**
+ * Renders an API error. "feature_not_enabled" gets a shortcut to the Experimental
+ * screen (runtime flags) or a hint about launch flags (routes gated at startup).
+ */
+export function ApiError(props: { error: unknown; onRetry?: () => void }) {
+  const e = () => props.error as MeiliError | Error;
+  const code = () => (e() instanceof MeiliError ? (e() as MeiliError).code : undefined);
+  const launchFlag = () => /--experimental-[\w-]+/.exec(e()?.message ?? "")?.[0];
+  return (
+    <div class="api-error">
+      <div class="err">{errorMessage(props.error)}</div>
+      <div class="row">
+        <Show when={code() === "feature_not_enabled" && !launchFlag()}>
+          <button class="primary" onClick={() => setView({ kind: "experimental" })}>
+            Open Experimental features
+          </button>
+        </Show>
+        <Show when={launchFlag()}>
+          <span class="muted small">
+            This route is enabled at launch with <code>{launchFlag()}</code>. For local instances, set it in the instance's launch flags.
+          </span>
+        </Show>
+        <Show when={(e() as MeiliError)?.link}>
+          <a class="small" href={(e() as MeiliError).link} target="_blank" rel="noreferrer">
+            Docs
+          </a>
+        </Show>
+        <Show when={props.onRetry}>
+          <button onClick={props.onRetry}>Retry</button>
+        </Show>
+      </div>
+    </div>
+  );
+}
+
+/** Keeps one broken screen from taking down the app shell. */
+export function ViewBoundary(props: ParentProps) {
+  return <ErrorBoundary fallback={(err, reset) => <div class="page"><ApiError error={err} onRetry={reset} /></div>}>{props.children}</ErrorBoundary>;
 }
 
 export function Spinner() {
