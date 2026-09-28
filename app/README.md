@@ -1,0 +1,33 @@
+# MeiliOps
+
+A native desktop admin app for [Meilisearch](https://www.meilisearch.com), in the spirit of MongoDB Compass and pgAdmin. Built with Tauri 2 and SolidJS. No Electron.
+
+## Features
+
+- **Connections:** multiple servers, color-coded. API keys are stored in the OS credential store
+- **Overview:** health, version, DB size, per-index stats, dumps and snapshots
+- **Documents:** virtualized grid (only visible rows are rendered), filter and sort, JSON editor, add/replace/update from JSON, NDJSON or CSV files, delete by ID/filter/all, export
+- **Search playground:** search-as-you-type, filters, sort, facets with facet search, hybrid/semantic search, ranking-score details, similar documents, raw JSON body mode
+- **Settings:** every index setting with inline diff against the server, apply, reset, and a re-index warning
+- **Index info:** stats, field distribution, rename, change primary key, swap, compact, delete
+- **Tasks and batches:** live list, filters, cancel/delete by filter, task payloads
+- **API keys:** create/edit/delete with an action picker; tenant tokens signed locally
+- **Webhooks and experimental features**
+- **API console:** every operation in the OpenAPI spec (143 in v1.54), including streaming routes
+
+## Development
+
+Prerequisites: Node 20+, Rust (rustup), MSVC C++ build tools, WebView2 (preinstalled on Windows 11).
+
+```bash
+npm install
+npm run dev          # UI only, in a browser (http://localhost:1420)
+npm run tauri dev    # desktop app
+npm run tauri build  # release build + installers
+npm run typecheck
+npm run coverage     # API coverage report
+```
+
+## License
+
+MIT

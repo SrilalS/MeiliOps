@@ -1,0 +1,38 @@
+// Native shell. The whole app is TypeScript; this file only exposes the OS
+// credential store (Windows Credential Manager / macOS Keychain / Secret Service)
+// so API keys never land in plain-text config.
+
+const SERVICE: &str = "io.meiliops.app";
+
+#[tauri::command]
+fn secret_set(account: String, secret: String) -> Result<(), String> {
+    keyring::Entry::new(SERVICE, &account)
+        .and_then(|e| e.set_password(&secret))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn secret_get(account: String) -> Result<Option<String>, String> {
+    match keyring::Entry::new(SERVICE, &account).and_then(|e| e.get_password()) {
+        Ok(s) => Ok(Some(s)),
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+fn secret_delete(account: String) -> Result<(), String> {
+    match keyring::Entry::new(SERVICE, &account).and_then(|e| e.delete_credential()) {
+        Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![secret_set, secret_get, secret_delete])
+        .run(tauri::generate_context!())
+        .expect("error while running MeiliOps");
+}
