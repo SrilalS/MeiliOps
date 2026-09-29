@@ -14,12 +14,19 @@ Tenant tokens are signed locally with the key you choose; nothing is sent to the
 
 ## Network access
 
-MeiliOps talks only to:
+MeiliOps connects only to the hosts below. There is **no telemetry**: no analytics, crash reports, usage tracking or accounts.
 
-- the Meilisearch servers you add,
-- `api.github.com` and GitHub's release downloads, when you install or update the Meilisearch binary for [local instances](../guide/local-instances).
+| Host | When | Can you turn it off? |
+|---|---|---|
+| The Meilisearch servers you add | Whenever you use them. Keys go only to the server they belong to | — |
+| `127.0.0.1` | Checking whether a port is free, and talking to your [local instances](../guide/local-instances) | — |
+| `api.github.com` | Opening **Local instances**, to list Meilisearch releases | Don't open that screen |
+| GitHub release downloads | Installing a Meilisearch version (SHA-256 checked, see below) | Only on request |
+| `github.com/SrilalS/MeiliOps/releases/latest/download/latest.json` | The [update check](../guide/updates): at most once a day, a few seconds after launch, and when you choose **Check for updates** | Yes: ⋮ → **Check automatically** |
+| MeiliOps' GitHub release download | Only when you click **Update and restart**. The installer is verified against the release signing key | Only on request |
+| Docker Hub (`docker.io`), through your own Docker or Podman | Pulling a Meilisearch image for a container instance | Only on request |
 
-There is no telemetry and no update check.
+The app sends no identifiers of its own in these requests.
 
 ## Local instance binaries
 

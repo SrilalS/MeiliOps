@@ -14,7 +14,7 @@ MeiliOps is built to stay small and light. These numbers were measured on Window
 
 | Scenario | Private memory |
 |---|---|
-| Idle | about **140 MB** |
+| Idle | about **145 MB** |
 | In use: 32,000-document grid scrolled end to end, JSON editor open | about 200 MB |
 | After leaving the grid | about 170 MB |
 

@@ -32,8 +32,9 @@
 Meilisearch ships a search preview, but no full admin tool. MeiliOps is that tool, in the spirit of MongoDB Compass and pgAdmin:
 
 - 🧭 **The whole API.** Every stable Meilisearch operation has a screen (140 of 143 in v1.54; the other 3 are Enterprise-only and reachable from the built-in API console). CI enforces it on every release.
-- ⚡ **Native and lightweight.** Tauri 2 and SolidJS: a 3 MB installer and about 140 MB of RAM at idle, most of it the system WebView.
+- ⚡ **Native and lightweight.** Tauri 2 and SolidJS: a 3 MB installer and about 145 MB of RAM at idle, most of it the system WebView.
 - 🔐 **Keys stay in your keychain.** API keys go to Windows Credential Manager, macOS Keychain or the Secret Service, never to a config file.
+- 🕵️ **No telemetry.** MeiliOps talks to your servers and GitHub (update check, Meilisearch downloads), nothing else. [Every host it contacts](https://srilals.github.io/MeiliOps/reference/security#network-access).
 
 ## Features
 

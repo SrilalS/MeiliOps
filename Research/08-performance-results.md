@@ -18,6 +18,7 @@
 | Tauri default WebView2 flags, idle (v0.1) | 192 MB |
 | Tuned flags (process consolidation + in-process GPU), idle (v0.1) | 130 MB |
 | v0.2 idle (more plugins: shell, http, upload, os) | **138 MB** |
+| v0.4.0 installed build, idle (+ updater, process plugins; `process.rs`), 2 runs of 20 samples | **144–148 MB** |
 | v0.2 in use: connected, 32k-doc grid scrolled end to end, JSON editor open | ~198 MB |
 | v0.2 after leaving the grid (+20 s) | ~167 MB |
 
