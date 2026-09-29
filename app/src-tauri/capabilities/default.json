@@ -20,13 +20,43 @@
       "identifier": "shell:allow-spawn",
       "allow": [
         {
-          "name": "meilisearch-win",
-          "cmd": "$APPLOCALDATA/bin/meilisearch.exe",
+          "name": "docker",
+          "cmd": "docker",
           "args": true
         },
         {
-          "name": "meilisearch",
-          "cmd": "$APPLOCALDATA/bin/meilisearch",
+          "name": "podman",
+          "cmd": "podman",
+          "args": true
+        },
+        {
+          "name": "docker-usr-local",
+          "cmd": "/usr/local/bin/docker",
+          "args": true
+        },
+        {
+          "name": "podman-usr-local",
+          "cmd": "/usr/local/bin/podman",
+          "args": true
+        },
+        {
+          "name": "docker-homebrew",
+          "cmd": "/opt/homebrew/bin/docker",
+          "args": true
+        },
+        {
+          "name": "podman-homebrew",
+          "cmd": "/opt/homebrew/bin/podman",
+          "args": true
+        },
+        {
+          "name": "podman-opt",
+          "cmd": "/opt/podman/bin/podman",
+          "args": true
+        },
+        {
+          "name": "docker-app",
+          "cmd": "/Applications/Docker.app/Contents/Resources/bin/docker",
           "args": true
         }
       ]
@@ -35,14 +65,58 @@
       "identifier": "shell:allow-execute",
       "allow": [
         {
-          "name": "meilisearch-win",
-          "cmd": "$APPLOCALDATA/bin/meilisearch.exe",
+          "name": "docker",
+          "cmd": "docker",
           "args": true
         },
         {
-          "name": "meilisearch",
-          "cmd": "$APPLOCALDATA/bin/meilisearch",
+          "name": "podman",
+          "cmd": "podman",
           "args": true
+        },
+        {
+          "name": "docker-usr-local",
+          "cmd": "/usr/local/bin/docker",
+          "args": true
+        },
+        {
+          "name": "podman-usr-local",
+          "cmd": "/usr/local/bin/podman",
+          "args": true
+        },
+        {
+          "name": "docker-homebrew",
+          "cmd": "/opt/homebrew/bin/docker",
+          "args": true
+        },
+        {
+          "name": "podman-homebrew",
+          "cmd": "/opt/homebrew/bin/podman",
+          "args": true
+        },
+        {
+          "name": "podman-opt",
+          "cmd": "/opt/podman/bin/podman",
+          "args": true
+        },
+        {
+          "name": "docker-app",
+          "cmd": "/Applications/Docker.app/Contents/Resources/bin/docker",
+          "args": true
+        },
+        {
+          "name": "meilisearch-legacy-win",
+          "cmd": "$APPLOCALDATA/bin/meilisearch.exe",
+          "args": [
+            "--version"
+          ]
+        },
+        {
+          "name": "meilisearch-legacy",
+          "cmd": "$APPLOCALDATA/bin/meilisearch",
+          "args": [
+            "--version"
+          ]
         }
       ]
     },

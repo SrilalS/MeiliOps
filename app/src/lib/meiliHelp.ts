@@ -26,7 +26,8 @@ export function parseHelp(text: string): FlagDef[] {
     flags.push(cur);
   };
   for (const raw of text.replace(/\r/g, "").split("\n")) {
-    const opt = raw.match(/^\s{2,8}(?:-\w,\s+)?--([\w-]+)(?:\s+<([^>]+)>)?\s*$/);
+    // `<VALUE>` is required, `[<VALUE>]` optional (e.g. --schedule-snapshot).
+    const opt = raw.match(/^\s{2,8}(?:-\w,\s+)?--([\w-]+)(?:\s+\[?<([^>]+)>\]?)?\s*$/);
     if (opt) {
       flush();
       cur = { name: opt[1], value: opt[2], description: "", experimental: opt[1].startsWith("experimental") };

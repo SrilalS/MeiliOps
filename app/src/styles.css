@@ -1823,3 +1823,102 @@ table.grid td {
   background: color-mix(in srgb, var(--warn) 14%, var(--bg));
   border-bottom: 1px solid color-mix(in srgb, var(--warn) 40%, var(--border));
 }
+
+/* ---------- local instances ---------- */
+.status-starting,
+.status-pulling,
+.status-stopping {
+  background: color-mix(in srgb, var(--warn) 18%, transparent);
+  color: var(--warn);
+}
+.status-crashed {
+  background: color-mix(in srgb, var(--err) 18%, transparent);
+  color: var(--err);
+}
+.engine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 12px;
+  flex: none;
+}
+.engine-grid > .card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.engine-grid .row > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--fg-2);
+}
+.version-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 132px;
+  overflow: auto;
+}
+.version-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  padding: 0 2px;
+  border-bottom: 1px solid var(--border);
+}
+.version-row:last-child {
+  border-bottom: none;
+}
+.engine-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 20px;
+  padding: 0 2px 0 8px;
+  border-radius: 10px;
+  background: var(--bg-3);
+  font-size: 11px;
+}
+.chip-x {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg-2);
+}
+.chip-x:hover:not(:disabled) {
+  background: var(--bg-elev);
+  color: var(--fg);
+}
+.chip-x svg {
+  width: 11px;
+  height: 11px;
+}
+.engine-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.engine-tag svg {
+  width: 13px;
+  height: 13px;
+  color: var(--fg-2);
+}
+/* Icon buttons next to text-only ones in a row of actions: align boxes, not baselines. */
+td.nowrap > button {
+  vertical-align: middle;
+}

@@ -46,7 +46,7 @@ Meilisearch ships a search preview, but no full admin tool. MeiliOps is that too
 | 🔑 **API keys** | Create, edit and delete keys; generate tenant tokens locally |
 | 📈 **Operations** | Prometheus metrics dashboard, live logs, export to another instance, webhooks, dumps and snapshots, experimental features |
 | 🧪 **Search features** | Multi-search (federated), search rules, chat workspaces with a streaming playground |
-| 🖥️ **Local instances** | Download the official binary (SHA-256 verified), run several instances with their own ports, keys and launch flags |
+| 🖥️ **Local instances** | Run any Meilisearch version natively (SHA-256 verified binaries, side by side) or in Docker / Podman, each instance with its own port, key and launch flags |
 | 🛟 **Resilient connections** | Detects a server going away, keeps your place, and reconnects on its own |
 | 🌗 **Themes** | System, light and dark, in Meilisearch's colors |
 

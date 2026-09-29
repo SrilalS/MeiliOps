@@ -34,7 +34,7 @@ features:
     details: Field types, fill rates, value ranges and top values from a sample, exact facet counts from the whole index, and one-click "make filterable".
   - icon: 🖥️
     title: Local instances
-    details: Download the official binary (SHA-256 verified), run several instances side by side with their own ports, keys and launch flags.
+    details: Run any Meilisearch version natively (SHA-256 verified binaries, side by side) or in Docker / Podman, each instance with its own port, key and launch flags.
   - icon: 🔐
     title: Keys stay in your keychain
     details: API keys go to Windows Credential Manager, macOS Keychain or the Secret Service. Never to a plain-text config file.

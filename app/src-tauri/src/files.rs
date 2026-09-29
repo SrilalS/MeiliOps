@@ -14,7 +14,7 @@ use std::{
 use tauri::{AppHandle, Manager, Runtime};
 
 /// Resolve `path` and make sure it lives inside the app's local data dir.
-fn checked<R: Runtime>(app: &AppHandle<R>, path: &str) -> Result<PathBuf, String> {
+pub(crate) fn checked<R: Runtime>(app: &AppHandle<R>, path: &str) -> Result<PathBuf, String> {
     let root = app.path().app_local_data_dir().map_err(|e| e.to_string())?;
     let p = PathBuf::from(path);
     if !p.is_absolute() || p.components().any(|c| matches!(c, Component::ParentDir)) || !p.starts_with(&root) {

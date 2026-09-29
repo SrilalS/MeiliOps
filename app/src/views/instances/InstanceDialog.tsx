@@ -1,11 +1,28 @@
-import { For, Show, createEffect, createMemo, createSignal, on, onMount } from "solid-js";
+import { For, Show, createEffect, createMemo, createResource, createSignal, on, onMount } from "solid-js";
 import { Modal } from "../../components/ui";
 import { MANAGED_FLAGS } from "../../lib/meiliHelp";
 import { secrets } from "../../lib/platform";
-import { Instance, findFreePort, flagDefs, generateMasterKey, instances, portInUse, saveInstance } from "../../state/instances";
+import {
+  ENGINES,
+  Engine,
+  Instance,
+  Release,
+  engineLabel,
+  engineOf,
+  engineReady,
+  engines,
+  findFreePort,
+  flagDefsFor,
+  generateMasterKey,
+  installedVersions,
+  instances,
+  portInUse,
+  saveInstance,
+  upgradePlan,
+} from "../../state/instances";
 import { notify } from "../../state/app";
 
-export default function InstanceDialog(props: { initial: Instance; isNew: boolean; onClose: () => void }) {
+export default function InstanceDialog(props: { initial: Instance; isNew: boolean; releases: Release[]; onClose: () => void }) {
   const [inst, setInst] = createSignal<Instance>(props.initial);
   const [key, setKey] = createSignal(props.isNew ? generateMasterKey() : "");
   const [showKey, setShowKey] = createSignal(false);
@@ -37,9 +54,38 @@ export default function InstanceDialog(props: { initial: Instance; isNew: boolea
     patch({ flags });
   };
 
+  const engine = () => engineOf(inst());
+  /**
+   * Native: installed binaries. Containers: any release (pulled on first start), pulled ones first.
+   * Plain strings so <For> keeps the <option>s (new objects would re-create them and reset the select).
+   */
+  const versionChoices = createMemo(() => {
+    const e = engine();
+    if (e === "native") return installedVersions();
+    const pulled = engines[e]?.images ?? [];
+    return [...pulled, ...props.releases.map((r) => r.version).filter((v) => !pulled.includes(v))];
+  });
+  const versionNote = (v: string) => {
+    const e = engine();
+    if (e !== "native" && engines[e]?.images.includes(v)) return " · pulled";
+    return props.releases.find((r) => r.version === v)?.prerelease ? " (pre-release)" : "";
+  };
+  const setEngine = (e: Engine) => {
+    const keep = e === "native" ? installedVersions().includes(inst().version ?? "") : true;
+    patch({ engine: e, version: keep ? inst().version : installedVersions()[0] });
+  };
+  const plan = () => upgradePlan(inst());
+  const movedData = () => !props.isNew && engineOf(props.initial) !== engine();
+
+  const [flagDefs] = createResource(
+    () => [engine(), inst().version] as const,
+    ([e, v]) => flagDefsFor(e, v).catch(() => undefined),
+  );
+  /** Flags set earlier that this version doesn't know: Meilisearch refuses to start with them. */
+  const unknownFlags = () => (flagDefs() ? Object.keys(inst().flags).filter((f) => !flagDefs()!.some((d) => d.name === f)) : []);
   const defs = createMemo(() => {
     const q = flagFilter().toLowerCase();
-    return flagDefs()
+    return (flagDefs() ?? [])
       .filter((f) => !MANAGED_FLAGS.has(f.name))
       .filter((f) => !onlySet() || f.name in inst().flags)
       .filter((f) => !q || f.name.includes(q) || f.description.toLowerCase().includes(q));
@@ -66,7 +112,7 @@ export default function InstanceDialog(props: { initial: Instance; isNew: boolea
       actions={
         <>
           <button onClick={props.onClose}>Cancel</button>
-          <button class="primary" disabled={!inst().name.trim() || portClash()} onClick={save}>
+          <button class="primary" disabled={!inst().name.trim() || !inst().version || portClash()} onClick={save}>
             Save
           </button>
         </>
@@ -95,6 +141,50 @@ export default function InstanceDialog(props: { initial: Instance; isNew: boolea
           </select>
         </label>
       </div>
+      <div class="row wrap">
+        <label class="field">
+          <span>Runs on</span>
+          <select value={engine()} onChange={(e) => setEngine(e.currentTarget.value as Engine)}>
+            <For each={ENGINES}>
+              {(e) => (
+                <option value={e} disabled={e !== "native" && !engines[e]}>
+                  {engineLabel(e)}
+                  {e === "native" ? "" : !engines[e] ? " (not found)" : !engineReady(e) ? " (not running)" : ""}
+                </option>
+              )}
+            </For>
+          </select>
+        </label>
+        <label class="field grow">
+          <span>Meilisearch version</span>
+          <select value={inst().version ?? ""} onChange={(e) => patch({ version: e.currentTarget.value || undefined })}>
+            <Show when={!inst().version || !versionChoices().includes(inst().version!)}>
+              <option value={inst().version ?? ""}>{inst().version ? `v${inst().version} (not available)` : "Pick a version…"}</option>
+            </Show>
+            <For each={versionChoices()}>
+              {(v) => (
+                <option value={v}>
+                  v{v}
+                  {versionNote(v)}
+                </option>
+              )}
+            </For>
+          </select>
+          <Show when={engine() === "native" && !installedVersions().length}>
+            <small class="warn">No native version installed. Install one on the Local instances page.</small>
+          </Show>
+        </label>
+      </div>
+      <Show when={movedData()}>
+        <div class="warn small">Data doesn't move between engines. On {engineLabel(engine())} this instance uses its own storage, which starts empty the first time; the {engineLabel(props.initial.engine)} data is kept.</div>
+      </Show>
+      <Show when={plan().upgrade}>
+        <div class="muted small">The data was last opened by v{inst().dataVersion?.[engine()]}; it's upgraded in place (--upgrade-db) on the next start. Take a dump or snapshot first if you may want to go back.</div>
+      </Show>
+      <Show when={plan().error}>
+        <div class="err small">{plan().error}</div>
+      </Show>
+
       <label class="field">
         <span>Master key (stored in the OS keychain, passed via MEILI_MASTER_KEY)</span>
         <div class="row">
@@ -105,13 +195,25 @@ export default function InstanceDialog(props: { initial: Instance; isNew: boolea
       </label>
 
       <div class="field">
-        <span>Launch flags ({flagDefs().length} from `meilisearch --help`)</span>
+        <span>
+          <Show when={flagDefs()} fallback={flagDefs.loading ? "Launch flags (loading…)" : `Launch flags: available once v${inst().version ?? "?"} is installed or pulled`}>
+            Launch flags ({flagDefs()!.length} from `meilisearch --help` of v{inst().version})
+          </Show>
+        </span>
         <div class="row">
           <input class="grow" placeholder="Search flags…" value={flagFilter()} onInput={(e) => setFlagFilter(e.currentTarget.value)} />
           <label class="inline-label">
             <input type="checkbox" checked={onlySet()} onChange={(e) => setOnlySet(e.currentTarget.checked)} /> only set
           </label>
         </div>
+        <Show when={unknownFlags().length}>
+          <div class="err small">
+            v{inst().version} doesn't have {unknownFlags().map((f) => `--${f}`).join(", ")}.{" "}
+            <button class="link" onClick={() => unknownFlags().forEach((f) => setFlag(f, undefined))}>
+              Remove {unknownFlags().length > 1 ? "them" : "it"}
+            </button>
+          </div>
+        </Show>
         <div class="flag-editor">
           <For each={defs()}>
             {(f) => {

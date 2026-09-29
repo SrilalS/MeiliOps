@@ -3,9 +3,12 @@
 //   so API keys never land in plain-text config
 // - `files.rs`: sandboxed file ops for the local instance manager
 // - `memory.rs`: WebView2 memory target while minimized (not exposed by Tauri)
+// - `process.rs`: runs side-by-side Meilisearch versions (the shell scope can't allow a
+//   per-version path)
 
 mod files;
 mod memory;
+mod process;
 
 const SERVICE: &str = "io.meiliops.app";
 
@@ -41,6 +44,7 @@ pub fn run() {
         .plugin(tauri_plugin_upload::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_http::init())
+        .manage(process::Children::default())
         .invoke_handler(tauri::generate_handler![
             secret_set,
             secret_get,
@@ -50,7 +54,11 @@ pub fn run() {
             files::app_remove,
             files::app_replace_file,
             files::app_sha256,
-            memory::webview_memory_low
+            memory::webview_memory_low,
+            process::meili_versions,
+            process::meili_output,
+            process::meili_spawn,
+            process::meili_kill
         ])
         .run(tauri::generate_context!())
         .expect("error while running MeiliOps");

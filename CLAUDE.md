@@ -8,7 +8,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 1. **100% coverage of Meilisearch's stable API** for the latest stable release. Experimental routes are best-effort. Enterprise-only routes (`/network*`) are out of scope and console-only.
 2. **No Electron.** Tauri 2 + TypeScript (SolidJS). Memory: see `Research/08-performance-results.md`.
 3. Windows 11 x64 first; macOS and Linux must keep building.
-4. **The team writes TypeScript only.** Native code is limited to `app/src-tauri/src/lib.rs` (keychain), `files.rs` (sandboxed file ops) and `memory.rs` (WebView2 memory target, not exposed by Tauri). Prefer Tauri plugins; add Rust only when a plugin is broken or missing, and document why.
+4. **The team writes TypeScript only.** Native code is limited to `app/src-tauri/src/lib.rs` (keychain), `files.rs` (sandboxed file ops), `memory.rs` (WebView2 memory target, not exposed by Tauri) and `process.rs` (runs side-by-side Meilisearch versions; the shell scope can't allow a per-version path). Prefer Tauri plugins; add Rust only when a plugin is broken or missing, and document why.
 5. API keys live in the OS credential store, never in plain-text config.
 
 ## 🗺️ Layout
@@ -19,7 +19,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/src/api/schema.d.ts` | Generated from `app/spec/meilisearch-openapi.json` (don't edit) |
 | `app/src/api/operations.json` | Generated op catalog for the API console (`npm run gen`) |
 | `app/src/state/app.ts` | Connections, active client, task tracking (`trackTask`), toasts |
-| `app/src/state/instances.ts` | Local instance manager: binary install, start/stop, launch flags |
+| `app/src/state/instances.ts` | Local instance manager: side-by-side native versions (`bin/<version>/`), Docker/Podman containers, start/stop, launch flags, data-version tracking |
 | `app/src/lib/sse.ts` | Fetch-based SSE reader (EventSource can't send auth headers) |
 | `app/src/lib/schema.ts` | Schema analysis of a document sample (Schema tab) |
 | `app/src/styles.css` | Design tokens at the top (Meilisearch palette, light + dark on `html[data-theme]`), then components |
@@ -46,6 +46,9 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - Something on this machine already listens on **7700**. The dev server uses **7711**, and local instances check ports before starting.
 - **CI caches are ref-scoped.** Tag builds can read `main`'s caches but not other tags', so `rust-cache.yml` warms them on `main` and `release.yml` only restores (`save-if: false`). Both must use the same `shared-key` (`tauri-<os>-<rust-target>`), or releases miss.
 - **Keep `crate-type = ["rlib"]`.** The template's `staticlib`/`cdylib` (mobile only) each add a full LTO pass: +130 s per build, same binary.
+- **Native Meilisearch runs through `process.rs`, containers through the shell plugin.** The shell scope pins one fixed path per program, so side-by-side versions can't be listed in `capabilities/default.json`. Docker/Podman are scoped by name plus the usual macOS install paths (GUI apps there don't get the shell `PATH`).
+- **Instance data is per engine.** `dataVersion[engine]` records the version that last opened it: newer → `--upgrade-db` (1.12+), older → refused (`upgradePlan`). Containers use a named volume `meiliops-<id>`, not a bind mount (LMDB over Windows/WSL mounts is unreliable).
+- **`<For>` over `<option>`s must key on primitives.** New objects each render re-create the options and the `<select>` snaps to the first one.
 - **Sync `#[tauri::command]`s run on the main thread.** Anything that calls `with_webview` and waits for it must be `async`, or it deadlocks (see `memory.rs`).
 - **The window has no native frame on Windows/Linux** (`decorations: false`); `TitleBar.tsx` draws the controls. macOS keeps native traffic lights via `tauri.macos.conf.json` (arrays in platform configs replace, so that file repeats the whole window). Empty title-bar areas need `data-tauri-drag-region`.
 - **Connection states** (`state/app.ts`): `idle → connecting → ready ⇄ lost`, or `error`. `lost` means the server stopped answering mid-session: views stay mounted, a watchdog probes `/health`, and `ApiError` panels retry on their own once it's back. Use `connected()` (ready or lost) to decide what renders, and `online()` to gate polling. Open the connection form with `openConnectionForm()`, never `setView`, so Cancel returns to where the user was.
