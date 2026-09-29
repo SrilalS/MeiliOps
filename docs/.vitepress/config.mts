@@ -53,6 +53,7 @@ export default defineConfig({
           text: "Help",
           items: [
             { text: "Appearance", link: "/guide/appearance" },
+            { text: "Updates", link: "/guide/updates" },
             { text: "Troubleshooting", link: "/guide/troubleshooting" },
           ],
         },

@@ -23,6 +23,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/src/lib/sse.ts` | Fetch-based SSE reader (EventSource can't send auth headers) |
 | `app/src/lib/schema.ts` | Schema analysis of a document sample (Schema tab) |
 | `app/src/styles.css` | Design tokens at the top (Meilisearch palette, light + dark on `html[data-theme]`), then components |
+| `app/src/state/updater.ts` | In-app updates (tauri-plugin-updater): daily check, title-bar Update button, `UpdateDialog.tsx` |
 | `app/src/state/theme.ts` | System / light / dark theme; `index.html` applies it before first paint |
 | `app/src/components/icons.ts` | Icon registry (Lucide, per-icon imports). Use icons from here, never Unicode glyphs |
 | `app/src/views/TitleBar.tsx` | Custom title bar: connection switcher, breadcrumb, theme menu, window controls |
@@ -31,6 +32,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/scripts/measure-memory.ps1` | Memory of the whole process tree |
 | `.github/workflows/ci.yml` | Push/PR: typecheck + `coverage --strict` only (no app builds) |
 | `.github/workflows/release.yml` | Tag `v*`: checks, draft release, builds (Windows NSIS, macOS arm64 + x64 DMG, Linux deb/rpm/AppImage), then publishes |
+| `.github/scripts/updater-manifest.mjs` | Writes the updater feed `latest.json` in the release's publish job (`--test` checks the file-name mapping) |
 | `.github/workflows/rust-cache.yml` | Keeps a compiled Rust dependency cache on `main` (on `Cargo.lock` changes + weekly) so releases start warm. Builds nothing that ships |
 | `.github/workflows/docs.yml` | Builds `docs/` (VitePress) and deploys it to GitHub Pages on changes to `main` |
 | `docs/` | User and developer documentation site. Screenshots in `docs/public/screenshots/`. Keep it in sync when features change |
@@ -49,6 +51,8 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - **Native Meilisearch runs through `process.rs`, containers through the shell plugin.** The shell scope pins one fixed path per program, so side-by-side versions can't be listed in `capabilities/default.json`. Docker/Podman are scoped by name plus the usual macOS install paths (GUI apps there don't get the shell `PATH`).
 - **Instance data is per engine.** `dataVersion[engine]` records the version that last opened it: newer → `--upgrade-db` (1.12+), older → refused (`upgradePlan`). Containers use a named volume `meiliops-<id>`, not a bind mount (LMDB over Windows/WSL mounts is unreliable).
 - **`<For>` over `<option>`s must key on primitives.** New objects each render re-create the options and the `<select>` snaps to the first one.
+- **Updates are signed.** Release builds need the `TAURI_SIGNING_PRIVATE_KEY(_PASSWORD)` secrets; the public key is in `tauri.conf.json` (`plugins.updater.pubkey`). Losing the private key strands every installed copy. Locally, `tauri build` makes the installer and then fails on signing: use `npm run build:unsigned`.
+- **`latest.json` is built once, in the publish job**, not by tauri-action (`includeUpdaterJson: false`): parallel jobs overwrite each other's entries, and a draft's asset URLs (`untagged-…`) break on publish. Adding a platform to the matrix means adding it to `REQUIRED` in `updater-manifest.mjs`.
 - **Sync `#[tauri::command]`s run on the main thread.** Anything that calls `with_webview` and waits for it must be `async`, or it deadlocks (see `memory.rs`).
 - **The window has no native frame on Windows/Linux** (`decorations: false`); `TitleBar.tsx` draws the controls. macOS keeps native traffic lights via `tauri.macos.conf.json` (arrays in platform configs replace, so that file repeats the whole window). Empty title-bar areas need `data-tauri-drag-region`.
 - **Connection states** (`state/app.ts`): `idle → connecting → ready ⇄ lost`, or `error`. `lost` means the server stopped answering mid-session: views stay mounted, a watchdog probes `/health`, and `ApiError` panels retry on their own once it's back. Use `connected()` (ready or lost) to decide what renders, and `online()` to gate polling. Open the connection form with `openConnectionForm()`, never `setView`, so Cancel returns to where the user was.
@@ -74,5 +78,5 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - Local server: `.dev/meilisearch.exe` on port 7711 with metrics, logs and task-streaming routes on. The key is in `.dev/dev.env`
 - UI in a browser: `npm run dev --prefix app` (secrets fall back to localStorage; local instances need the desktop app)
 - Desktop app: `npm run tauri dev --prefix app` (needs `~/.cargo/bin` on PATH)
-- Installer: `npm run tauri build --prefix app` → `src-tauri/target/release/bundle/nsis/`
+- Installer: `npm run build:unsigned --prefix app` → `src-tauri/target/release/bundle/nsis/` (no updater signing key needed)
 - Docs site: `npm run dev --prefix docs` (VitePress). `npm run build --prefix docs` fails on dead links

@@ -22,6 +22,8 @@ import ChatsView from "./views/ChatsView";
 import SearchRulesView from "./views/SearchRulesView";
 import InstancesView from "./views/instances/InstancesView";
 import { loadInstances, stopAllOnExit } from "./state/instances";
+import { initUpdater, updateDialogOpen } from "./state/updater";
+import UpdateDialog from "./views/UpdateDialog";
 import { trimMemoryWhenMinimized } from "./lib/platform";
 import "./fonts.css";
 import "./styles.css";
@@ -51,6 +53,7 @@ export default function App() {
     loadConnections();
     loadInstances();
     stopAllOnExit();
+    initUpdater();
     trimMemoryWhenMinimized();
   });
 
@@ -122,6 +125,9 @@ export default function App() {
       </main>
       <Show when={connected()}>
         <StatusBar />
+      </Show>
+      <Show when={updateDialogOpen()}>
+        <UpdateDialog />
       </Show>
       <Toasts />
     </div>

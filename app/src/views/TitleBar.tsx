@@ -10,9 +10,13 @@ import { activeConnection, activeId, connect, connected, connections, disconnect
 import { runningCount } from "../state/instances";
 import { ThemeMode, setThemeMode, themeMode } from "../state/theme";
 import { isTauri } from "../lib/platform";
+import { appVersion, autoCheck, checkForUpdates, openUpdateDialog, setAutoCheck, updateStatus, availableUpdate } from "../state/updater";
 import {
   IconCheck,
   IconChevronDown,
+  IconEllipsis,
+  IconRefresh,
+  IconUpdate,
   IconMaximize,
   IconMinimize,
   IconMonitor,
@@ -77,7 +81,16 @@ export default function TitleBar() {
         </span>
       </Show>
       <span class="grow" data-tauri-drag-region />
+      <Show when={availableUpdate()}>
+        <button class="titlebar-btn update-btn" title={`Update to MeiliOps ${availableUpdate()!.version}`} onClick={openUpdateDialog}>
+          <IconUpdate />
+          {updateStatus() === "downloading" || updateStatus() === "installing" ? "Updating…" : `Update ${availableUpdate()!.version}`}
+        </button>
+      </Show>
       <ThemePicker />
+      <Show when={isTauri}>
+        <AppMenu />
+      </Show>
       <Show when={isTauri && !isMac}>
         <WindowControls />
       </Show>
@@ -238,6 +251,36 @@ function ThemePicker() {
               </div>
             )}
           </For>
+        </>
+      )}
+    </Popover>
+  );
+}
+
+function AppMenu() {
+  return (
+    <Popover title="MeiliOps" class="square" align="right" button={() => <IconEllipsis />}>
+      {(close) => (
+        <>
+          <div class="popover-title">MeiliOps {appVersion()}</div>
+          <div
+            class="popover-item"
+            onClick={() => {
+              close();
+              if (availableUpdate()) openUpdateDialog();
+              else checkForUpdates();
+            }}
+          >
+            <IconRefresh class="popover-icon" classList={{ spin: updateStatus() === "checking" }} />
+            <span class="grow">{availableUpdate() ? `Update to ${availableUpdate()!.version}…` : updateStatus() === "checking" ? "Checking…" : "Check for updates"}</span>
+          </div>
+          <div class="popover-item" onClick={() => setAutoCheck(!autoCheck())}>
+            <span class="popover-icon" />
+            <span class="grow">Check automatically</span>
+            <Show when={autoCheck()}>
+              <IconCheck class="popover-check" />
+            </Show>
+          </div>
         </>
       )}
     </Popover>

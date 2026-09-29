@@ -647,6 +647,11 @@ export async function stopInstance(id: string) {
   await child.kill();
 }
 
+/** Stop every managed instance (window close, installing an app update). */
+export async function stopAllInstances() {
+  await Promise.allSettled([...children.keys()].map(stopInstance));
+}
+
 /** Stop managed instances when the window closes so no orphans keep ports and DB locks. */
 export async function stopAllOnExit() {
   if (!isTauri) return;
@@ -655,7 +660,7 @@ export async function stopAllOnExit() {
   await win.onCloseRequested(async (event) => {
     if (children.size === 0) return;
     event.preventDefault();
-    await Promise.allSettled([...children.keys()].map(stopInstance));
+    await stopAllInstances();
     await win.destroy();
   });
 }

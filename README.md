@@ -71,6 +71,8 @@ Download the latest installer from **[Releases](https://github.com/SrilalS/Meili
 | macOS | `MeiliOps_<version>_aarch64.dmg` (Apple Silicon) or `_x64.dmg` (Intel) |
 | Linux (x64) | `.deb`, `.rpm` or `.AppImage` |
 
+From 0.4 on, MeiliOps updates itself: an **Update** button appears in the title bar when a new release is out, and every update is verified against the release signing key.
+
 > [!NOTE]
 > Builds aren't code-signed yet. On Windows, choose **More info → Run anyway** in the SmartScreen prompt; on macOS, right-click the app and choose **Open** the first time. [More help](https://srilals.github.io/MeiliOps/guide/troubleshooting).
 

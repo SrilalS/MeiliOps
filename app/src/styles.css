@@ -1922,3 +1922,51 @@ table.grid td {
 td.nowrap > button {
   vertical-align: middle;
 }
+
+/* ---------- app updates ---------- */
+.titlebar-btn.update-btn {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.titlebar-btn.update-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.titlebar-btn.update-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.update-notes {
+  max-height: 260px;
+  overflow: auto;
+  margin: 10px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  font-size: 12.5px;
+}
+.notes-h {
+  font-weight: 600;
+  margin: 8px 0 2px;
+}
+.notes-h:first-child {
+  margin-top: 0;
+}
+.notes-li {
+  position: relative;
+  padding-left: 14px;
+}
+.notes-li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.62em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--fg-3);
+}
+.popover-icon.spin {
+  animation: spin 0.9s linear infinite;
+}

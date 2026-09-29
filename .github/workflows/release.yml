@@ -136,16 +136,35 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          # Signs the updater artifacts (bundle.createUpdaterArtifacts). The public half is in
+          # tauri.conf.json > plugins.updater.pubkey; see docs/development/releasing.md.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: app
           releaseId: ${{ needs.check.outputs.release_id }}
           args: ${{ matrix.args }}
+          # latest.json is written once by the publish job (.github/scripts/updater-manifest.mjs).
+          includeUpdaterJson: false
 
   publish:
     name: Publish release
     needs: [check, build]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          sparse-checkout: .github/scripts
+      # The in-app updater's feed. Fails (and so doesn't publish) if a platform isn't signed.
+      - name: Updater feed (latest.json)
+        working-directory: .
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ needs.check.outputs.release_id }}
+        run: |
+          node .github/scripts/updater-manifest.mjs
+          gh release upload "$TAG" latest.json --clobber
       # Only reached when every platform built, so a release never goes out half-empty.
       - env:
           GH_TOKEN: ${{ github.token }}
