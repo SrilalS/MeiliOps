@@ -31,6 +31,9 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/scripts/measure-memory.ps1` | Memory of the whole process tree |
 | `.github/workflows/ci.yml` | Push/PR: typecheck + `coverage --strict` only (no app builds) |
 | `.github/workflows/release.yml` | Tag `v*`: checks, draft release, builds (Windows NSIS, macOS arm64 + x64 DMG, Linux deb/rpm/AppImage), then publishes |
+| `.github/workflows/docs.yml` | Builds `docs/` (VitePress) and deploys it to GitHub Pages on changes to `main` |
+| `docs/` | User and developer documentation site. Screenshots in `docs/public/screenshots/`. Keep it in sync when features change |
+| `README.md` | Project front page (features, install, screenshots) |
 
 ## ⚠️ Gotchas (learned the hard way)
 
@@ -66,3 +69,4 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - UI in a browser: `npm run dev --prefix app` (secrets fall back to localStorage; local instances need the desktop app)
 - Desktop app: `npm run tauri dev --prefix app` (needs `~/.cargo/bin` on PATH)
 - Installer: `npm run tauri build --prefix app` → `src-tauri/target/release/bundle/nsis/`
+- Docs site: `npm run dev --prefix docs` (VitePress). `npm run build --prefix docs` fails on dead links
