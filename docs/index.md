@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: MeiliOps
-  text: The desktop admin app for Meilisearch
+  text: The desktop admin app for Meilisearch (beta)
   tagline: Browse documents, tune settings, watch tasks and run local instances. Native, fast and light on memory. No Electron.
   image:
     src: /logo.svg

@@ -1,19 +1,22 @@
 # Architecture
 
 ```
-┌────────────────────────────── MeiliOps ──────────────────────────────┐
+┌────────────────────────────── MeiliOps ───────────────────────────────┐
 │  SolidJS UI (TypeScript)                                              │
 │   views/ ── state/app.ts ── api/meili.ts ──── HTTP ────▶ Meilisearch  │
 │               │   (connections,     (typed client,                    │
 │               │    tasks, toasts)    reachability hooks)              │
-│               └─ state/instances.ts ── shell plugin ──▶ meilisearch   │
-│                                                          (local)      │
+│               ├─ state/instances.ts ─┬─ process.rs ───▶ meilisearch   │
+│               │                      │                  (native)      │
+│               │                      └─ shell plugin ─▶ docker/podman │
+│               └─ state/updater.ts ── updater plugin ──▶ GitHub        │
 ├───────────────────────────────────────────────────────────────────────┤
-│  Tauri 2 shell (Rust, ~180 lines)                                     │
-│   lib.rs     OS keychain for API keys                                 │
-│   files.rs   file ops inside the app data folder                      │
-│   memory.rs  WebView2 memory target while minimized                   │
-│   plugins    store · shell · http · upload · os                       │
+│  Tauri 2 shell (Rust, under 400 lines)                                │
+│   lib.rs      OS keychain for API keys                                │
+│   files.rs    file ops inside the app data folder                     │
+│   memory.rs   WebView2 memory target while minimized                  │
+│   process.rs  side-by-side Meilisearch versions                       │
+│   plugins     store · shell · http · upload · os · updater · process  │
 └───────────────────────────────────────────────────────────────────────┘
 ```
 

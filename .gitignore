@@ -6,3 +6,6 @@ target/
 
 # Updater signing key: the private half never belongs in the repo
 *.key
+
+# Private notes
+/product/

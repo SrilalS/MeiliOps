@@ -14,6 +14,7 @@
   <a href="https://github.com/SrilalS/MeiliOps/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/SrilalS/MeiliOps?color=ff5cb2&label=download" /></a>
   <a href="https://github.com/SrilalS/MeiliOps/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/SrilalS/MeiliOps/actions/workflows/ci.yml/badge.svg" /></a>
   <img alt="Meilisearch API coverage" src="https://img.shields.io/badge/Meilisearch%201.54%20API-100%25-5468ff" />
+  <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-f5a524" />
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-00c7b7" /></a>
 </p>
 
@@ -63,6 +64,9 @@ Meilisearch ships a search preview, but no full admin tool. MeiliOps is that too
 
 ## Install
 
+> [!IMPORTANT]
+> MeiliOps is in **beta** (0.x). It's used daily on Windows; the macOS and Linux builds have had less real-world use. Expect rough edges and please [report them](https://github.com/SrilalS/MeiliOps/issues).
+
 Download the latest installer from **[Releases](https://github.com/SrilalS/MeiliOps/releases/latest)**:
 
 | Platform | File |
@@ -80,7 +84,7 @@ MeiliOps supports the **latest stable Meilisearch** (currently 1.54).
 
 ## Development
 
-The app is TypeScript end to end; the Rust shell is about 180 lines and you shouldn't need to touch it.
+The app is TypeScript end to end; the Rust shell is under 400 lines and you shouldn't need to touch it.
 
 ```bash
 cd app
