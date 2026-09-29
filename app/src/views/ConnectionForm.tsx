@@ -1,6 +1,6 @@
 import { Show, createSignal, onMount } from "solid-js";
 import { Meili, errorMessage } from "../api/meili";
-import { connect, connections, deleteConnection, getConnectionKey, newConnectionColor, notify, saveConnection, setView } from "../state/app";
+import { activeId, closeConnectionForm, connect, connections, deleteConnection, getConnectionKey, newConnectionColor, notify, saveConnection } from "../state/app";
 import { Confirm, Spinner } from "../components/ui";
 
 export default function ConnectionForm(props: { id?: string }) {
@@ -33,10 +33,14 @@ export default function ConnectionForm(props: { id?: string }) {
 
   const save = async (andConnect: boolean) => {
     if (!name().trim() || !url().trim()) return notify("error", "Name and URL are required");
+    const before = existing();
     const conn = await saveConnection({ id: props.id, name: name().trim(), url: url().trim(), color: color() }, props.id && !keyDirty() ? undefined : key());
     notify("success", "Connection saved");
-    if (andConnect) await connect(conn.id);
-    else setView({ kind: "welcome" });
+    // Editing the live connection's URL or key: the open client still uses the old ones.
+    const liveChanged = conn.id === activeId() && (before?.url !== conn.url || keyDirty());
+    if (andConnect) return connect(conn.id);
+    closeConnectionForm();
+    if (liveChanged) await connect(conn.id);
   };
 
   return (
@@ -101,7 +105,7 @@ export default function ConnectionForm(props: { id?: string }) {
             </button>
           </Show>
           <span class="grow" />
-          <button type="button" onClick={() => setView({ kind: "welcome" })}>
+          <button type="button" onClick={closeConnectionForm}>
             Cancel
           </button>
           <button type="button" onClick={() => save(false)}>
@@ -117,8 +121,8 @@ export default function ConnectionForm(props: { id?: string }) {
           title="Delete connection"
           message={<>Remove “{name()}” and its stored key from this computer? The server is not affected.</>}
           onConfirm={async () => {
-            await deleteConnection(props.id!);
-            setView({ kind: "welcome" });
+            await deleteConnection(props.id!, { navigate: false });
+            closeConnectionForm();
           }}
           onClose={() => setConfirmDelete(false)}
         />

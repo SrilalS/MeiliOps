@@ -6,7 +6,7 @@
 
 import { For, JSX, Show, createSignal, onCleanup, onMount } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { activeConnection, activeId, connect, connections, server, setView, view } from "../state/app";
+import { activeConnection, activeId, connect, connected, connections, disconnect, openConnectionForm, server, setView, view } from "../state/app";
 import { runningCount } from "../state/instances";
 import { ThemeMode, setThemeMode, themeMode } from "../state/theme";
 import { isTauri } from "../lib/platform";
@@ -22,6 +22,7 @@ import {
   IconRestore,
   IconServer,
   IconSun,
+  IconUnplug,
   IconX,
 } from "../components/icons";
 
@@ -54,6 +55,8 @@ const THEMES: { id: ThemeMode; label: string; icon: typeof IconSun }[] = [
 export default function TitleBar() {
   const crumb = () => {
     const v = view();
+    // Server pages only have a location while connected (not during connecting / error).
+    if (!connected() && v.kind !== "instances" && v.kind !== "connection-form") return undefined;
     if (v.kind === "index") return v.uid;
     return VIEW_TITLES[v.kind];
   };
@@ -120,6 +123,15 @@ function ConnectionPicker() {
         <>
           <span class="dot" style={{ background: activeConnection()?.color ?? "var(--fg-3)" }} />
           <span class="ellipsis">{label()}</span>
+          <Show when={server().status === "connecting"}>
+            <span class="spinner tiny" />
+          </Show>
+          <Show when={server().status === "error"}>
+            <span class="pill status-failed">offline</span>
+          </Show>
+          <Show when={server().status === "lost"}>
+            <span class="pill status-enqueued">reconnecting</span>
+          </Show>
           <IconChevronDown class="chev" />
         </>
       )}
@@ -133,6 +145,8 @@ function ConnectionPicker() {
                 class="popover-item"
                 onClick={() => {
                   close();
+                  // Already connected to it: nothing to do (don't reset the page).
+                  if (activeId() === c.id && server().status === "ready") return;
                   connect(c.id);
                 }}
               >
@@ -150,7 +164,7 @@ function ConnectionPicker() {
                   onClick={(e) => {
                     e.stopPropagation();
                     close();
-                    setView({ kind: "connection-form", id: c.id });
+                    openConnectionForm(c.id);
                   }}
                 >
                   <IconPencil />
@@ -163,7 +177,7 @@ function ConnectionPicker() {
             class="popover-item"
             onClick={() => {
               close();
-              setView({ kind: "connection-form" });
+              openConnectionForm();
             }}
           >
             <IconPlus class="popover-icon" />
@@ -182,6 +196,18 @@ function ConnectionPicker() {
               <span class="pill status-succeeded">{runningCount()} running</span>
             </Show>
           </div>
+          <Show when={activeId()}>
+            <div
+              class="popover-item"
+              onClick={() => {
+                close();
+                disconnect();
+              }}
+            >
+              <IconUnplug class="popover-icon" />
+              <span class="grow">Disconnect</span>
+            </div>
+          </Show>
         </>
       )}
     </Popover>

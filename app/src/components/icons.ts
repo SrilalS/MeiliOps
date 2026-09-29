@@ -34,3 +34,4 @@ export { default as IconTicket } from "lucide-solid/icons/ticket";
 export { default as IconTrash } from "lucide-solid/icons/trash";
 export { default as IconWebhook } from "lucide-solid/icons/webhook";
 export { default as IconX } from "lucide-solid/icons/x";
+export { default as IconUnplug } from "lucide-solid/icons/unplug";

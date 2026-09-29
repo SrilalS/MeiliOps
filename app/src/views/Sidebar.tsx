@@ -1,6 +1,6 @@
 import { Component, For, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { activeId, connect, connections, indexes, refreshIndexes, server, setView, view, View } from "../state/app";
+import { activeId, connect, connected, connections, indexes, openConnectionForm, refreshIndexes, setView, view, View } from "../state/app";
 import { formatNumber } from "../components/ui";
 import CreateIndexDialog from "./CreateIndexDialog";
 import { runningCount } from "../state/instances";
@@ -60,7 +60,6 @@ const NAV: { group: string; items: NavItem[] }[] = [
 export default function Sidebar() {
   const [filter, setFilter] = createSignal("");
   const [creating, setCreating] = createSignal(false);
-  const connected = () => server().status === "ready";
   const filtered = () => indexes().filter((i) => i.uid.toLowerCase().includes(filter().toLowerCase()));
 
   return (
@@ -70,7 +69,7 @@ export default function Sidebar() {
         <div class="sidebar-section">
           <div class="sidebar-title">
             <span>Connections</span>
-            <button class="icon-btn" title="New connection" onClick={() => setView({ kind: "connection-form" })}>
+            <button class="icon-btn" title="New connection" onClick={() => openConnectionForm()}>
               <IconPlus />
             </button>
           </div>
@@ -86,7 +85,7 @@ export default function Sidebar() {
                   title="Edit connection"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setView({ kind: "connection-form", id: c.id });
+                    openConnectionForm(c.id);
                   }}
                 >
                   <IconPencil />

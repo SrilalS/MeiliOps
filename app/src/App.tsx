@@ -4,7 +4,7 @@ import Sidebar from "./views/Sidebar";
 import TitleBar from "./views/TitleBar";
 import StatusBar from "./views/StatusBar";
 import { Toasts, Empty, Spinner, ViewBoundary } from "./components/ui";
-import { View, connect, connections, loadConnections, server, setView, view } from "./state/app";
+import { View, activeConnection, activeId, connect, connected, connections, disconnect, loadConnections, openConnectionForm, retryNow, server, setView, view } from "./state/app";
 import ConnectionForm from "./views/ConnectionForm";
 import OverviewView from "./views/OverviewView";
 import IndexView from "./views/IndexView";
@@ -26,7 +26,7 @@ import { trimMemoryWhenMinimized } from "./lib/platform";
 import "./fonts.css";
 import "./styles.css";
 import { loadTheme } from "./state/theme";
-import { IconPlus, IconServer } from "./components/icons";
+import { IconPencil, IconPlus, IconRefresh, IconServer, IconUnplug } from "./components/icons";
 
 /** Server-level screens that need an active connection. */
 const CONNECTED_VIEWS: Partial<Record<View["kind"], Component>> = {
@@ -54,16 +54,29 @@ export default function App() {
     trimMemoryWhenMinimized();
   });
 
-  const connected = () => server().status === "ready";
-
   return (
     <div class="app">
       <TitleBar />
       <Sidebar />
       <main class="main">
+        <Show when={server().status === "lost" && view().kind !== "connection-form" && view().kind !== "instances"}>
+          <div class="lost-banner">
+            <span class="spinner tiny" />
+            <span class="grow">
+              <b>{server().error}</b> <span class="muted">Retrying every few seconds. Your page is kept.</span>
+            </span>
+            <button onClick={retryNow}>
+              <IconRefresh /> Retry now
+            </button>
+            <button onClick={() => disconnect()}>
+              <IconUnplug /> Disconnect
+            </button>
+          </div>
+        </Show>
         <Switch>
-          <Match when={view().kind === "connection-form"}>
-            <ConnectionForm id={(view() as { id?: string }).id} />
+          {/* Keyed on the view object: opening another connection's form remounts it with that connection's fields. */}
+          <Match when={view().kind === "connection-form" && (view() as { kind: "connection-form"; id?: string })} keyed>
+            {(v) => <ConnectionForm id={v.id} />}
           </Match>
           <Match when={view().kind === "instances"}>
             <InstancesView />
@@ -74,9 +87,17 @@ export default function App() {
             </Empty>
           </Match>
           <Match when={server().status === "error"}>
-            <Empty title="Connection failed">
-              <p>{server().error}</p>
-              <button onClick={() => setView({ kind: "welcome" })}>Back</button>
+            <Empty title={`Couldn't connect to ${activeConnection()?.name ?? "server"}`}>
+              <p class="muted">{server().error}</p>
+              <div class="row">
+                <button class="primary" onClick={() => connect(activeId()!)}>
+                  <IconRefresh /> Retry
+                </button>
+                <button onClick={() => openConnectionForm(activeId())}>
+                  <IconPencil /> Edit connection
+                </button>
+                <button onClick={() => disconnect()}>Back</button>
+              </div>
             </Empty>
           </Match>
           <Match when={!connected()}>
@@ -89,7 +110,8 @@ export default function App() {
               </ViewBoundary>
             )}
           </Match>
-          <Match when={CONNECTED_VIEWS[view().kind]} keyed>
+          {/* Any other view while connected (e.g. "welcome") shows the Overview instead of a blank page. */}
+          <Match when={CONNECTED_VIEWS[view().kind] ?? OverviewView} keyed>
             {(c) => (
               <ViewBoundary>
                 <Dynamic component={c} />
@@ -128,7 +150,7 @@ function Welcome() {
         </div>
       </Show>
       <div class="row">
-        <button class="primary" onClick={() => setView({ kind: "connection-form" })}>
+        <button class="primary" onClick={() => openConnectionForm()}>
           <IconPlus /> New connection
         </button>
         <button onClick={() => setView({ kind: "instances" })}>

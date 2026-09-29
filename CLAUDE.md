@@ -42,6 +42,8 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - Something on this machine already listens on **7700**. The dev server uses **7711**, and local instances check ports before starting.
 - **Sync `#[tauri::command]`s run on the main thread.** Anything that calls `with_webview` and waits for it must be `async`, or it deadlocks (see `memory.rs`).
 - **The window has no native frame on Windows/Linux** (`decorations: false`); `TitleBar.tsx` draws the controls. macOS keeps native traffic lights via `tauri.macos.conf.json` (arrays in platform configs replace, so that file repeats the whole window). Empty title-bar areas need `data-tauri-drag-region`.
+- **Connection states** (`state/app.ts`): `idle → connecting → ready ⇄ lost`, or `error`. `lost` means the server stopped answering mid-session: views stay mounted, a watchdog probes `/health`, and `ApiError` panels retry on their own once it's back. Use `connected()` (ready or lost) to decide what renders, and `online()` to gate polling. Open the connection form with `openConnectionForm()`, never `setView`, so Cancel returns to where the user was.
+- **Pin the client in long-running async work** (`const m = api()` before the first `await`). The user can switch servers mid-flight, and `api()` would then return the new server.
 - **UI consistency:** use the tokens (`--bg*`, `--fg*`, `--accent*`, `--control-h`), never raw colors in components. Buttons, inputs and selects share `--control-h`; icon-only buttons are `.icon-btn` (24px) or `button.square` (control height).
 - Some experimental features are **launch flags** (logs route, metrics, task streaming); others are runtime toggles (`/experimental-features`). `ApiError` points users to the right one.
 

@@ -7,7 +7,7 @@ import { createStore } from "solid-js/store";
 import { isTauri, loadSetting, saveSetting, secrets } from "../lib/platform";
 import { FlagDef, parseHelp } from "../lib/meiliHelp";
 import { Meili } from "../api/meili";
-import { deleteConnection, saveConnection, notify, notifyError } from "./app";
+import { activeId, connect, connections, deleteConnection, saveConnection, notify, notifyError } from "./app";
 
 export interface Instance {
   id: string;
@@ -139,7 +139,8 @@ export async function deleteInstance(id: string, deleteData: boolean) {
   if (deleteData) await files.remove(await (await paths()).instanceDir(id));
   // Drop the connection this instance registered for itself.
   const connId = s.instances.find((x) => x.id === id)?.connectionId;
-  if (connId) await deleteConnection(connId);
+  // Stay on the Local instances page even if it was the active connection.
+  if (connId) await deleteConnection(connId, { navigate: false });
   s.setInstances((list) => list.filter((x) => x.id !== id));
   await persist();
 }
@@ -322,11 +323,16 @@ export async function startInstance(id: string) {
 }
 
 async function ensureConnection(inst: Instance, key: string | undefined) {
+  // Keep a name/color the user gave the connection; only the URL and key follow the instance.
+  const existing = connections.find((c) => c.id === inst.connectionId);
+  const url = `http://127.0.0.1:${inst.port}`;
   const conn = await saveConnection(
-    { id: inst.connectionId, name: `${inst.name} (local)`, url: `http://127.0.0.1:${inst.port}`, color: "#10b981" },
+    { id: existing?.id, name: existing?.name ?? `${inst.name} (local)`, url, color: existing?.color ?? "#00c7b7" },
     key ?? "",
   );
   if (inst.connectionId !== conn.id) await saveInstance({ ...s.instances.find((i) => i.id === inst.id)!, connectionId: conn.id });
+  // It's the live connection and the port changed: the open client points at the old URL.
+  if (activeId() === conn.id && existing && existing.url !== url) await connect(conn.id);
 }
 
 export async function stopInstance(id: string) {

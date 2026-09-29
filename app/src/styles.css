@@ -1813,3 +1813,13 @@ table.grid td {
 .welcome-conn:hover:not(:disabled) {
   border-color: var(--accent);
 }
+
+/* ---------- connection lost ---------- */
+.lost-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 22px;
+  background: color-mix(in srgb, var(--warn) 14%, var(--bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--warn) 40%, var(--border));
+}

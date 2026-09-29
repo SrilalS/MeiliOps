@@ -1,6 +1,6 @@
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { Task } from "../api/meili";
-import { api, indexes, notify, notifyError, refreshIndexes, trackTask } from "../state/app";
+import { api, indexes, notify, notifyError, online, refreshIndexes, trackTask } from "../state/app";
 import VirtualTable, { Column } from "../components/VirtualTable";
 import JsonEditor from "../components/JsonEditor";
 import { Confirm, StatusPill, formatDate, formatNumber, pretty } from "../components/ui";
@@ -82,7 +82,7 @@ export default function TasksView() {
     (signal) => streamSse(api(), "GET", "/tasks/stream", { onData: (d) => upsert(JSON.parse(d)) }, { signal }),
     () => setMode("polling"),
   );
-  const timer = setInterval(() => mode() === "polling" && auto() && !loadingMore && tasks().length <= 200 && load(), 2000);
+  const timer = setInterval(() => online() && mode() === "polling" && auto() && !loadingMore && tasks().length <= 200 && load(), 2000);
   onCleanup(() => {
     stop();
     clearInterval(timer);

@@ -36,6 +36,21 @@ export class MeiliError extends Error {
   }
 }
 
+/** The server could not be reached at all (refused, DNS, offline). No HTTP response. */
+export class NetworkError extends Error {
+  constructor(
+    public url: string,
+    public cause?: unknown,
+  ) {
+    super(`Can't reach ${url}. Is Meilisearch running there?`);
+    this.name = "NetworkError";
+  }
+}
+
+export const isNetworkError = (e: unknown): e is NetworkError => e instanceof NetworkError;
+
+const isAbort = (e: unknown) => e instanceof DOMException && (e.name === "AbortError" || e.name === "TimeoutError");
+
 export interface EnqueuedTask {
   taskUid: number;
   indexUid: string | null;
@@ -72,6 +87,9 @@ function safeJson(text: string): any {
 
 export class Meili {
   readonly url: string;
+  /** Connection-health hooks: the app uses them to detect a server going away and coming back. */
+  onUnreachable?: (e: NetworkError) => void;
+  onReachable?: () => void;
 
   constructor(url: string, private key?: string) {
     this.url = url.trim().replace(/\/+$/, "");
@@ -114,12 +132,12 @@ export class Meili {
         contentType = "application/json";
       }
     }
-    const res = await (opts.fetch ?? fetch)(this.resolve(path, opts), {
+    const res = await this.fetch(this.resolve(path, opts), {
       method,
       headers: { ...this.headers(contentType), ...opts.headers },
       body,
       signal: opts.signal,
-    });
+    }, opts.fetch);
     if (opts.raw) {
       if (!res.ok) throw await toError(res);
       return res as unknown as T;
@@ -136,6 +154,21 @@ export class Meili {
       );
     }
     return data as T;
+  }
+
+  /** fetch() that reports reachability and turns connection failures into NetworkError. */
+  async fetch(url: string, init: RequestInit, impl: typeof fetch = fetch): Promise<Response> {
+    let res: Response;
+    try {
+      res = await impl(url, init);
+    } catch (e) {
+      if (isAbort(e) || init.signal?.aborted) throw e;
+      const err = new NetworkError(this.url, e);
+      this.onUnreachable?.(err);
+      throw err;
+    }
+    this.onReachable?.();
+    return res;
   }
 
   /** Poll a task until it reaches a final status. */

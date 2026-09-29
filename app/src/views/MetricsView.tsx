@@ -1,5 +1,6 @@
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
-import { api } from "../state/app";
+import { api, online } from "../state/app";
+import { isNetworkError } from "../api/meili";
 import { ApiError, Stat, formatBytes, formatNumber } from "../components/ui";
 import { IconRefresh } from "../components/icons";
 
@@ -55,7 +56,7 @@ export default function MetricsView() {
     }
   };
   onMount(load);
-  const timer = setInterval(() => auto() && !err() && load(), 5000);
+  const timer = setInterval(() => auto() && online() && (!err() || isNetworkError(err())) && load(), 5000);
   onCleanup(() => clearInterval(timer));
 
   const value = (name: string) => fams().find((f) => f.name === name)?.samples[0]?.value;

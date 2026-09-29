@@ -2,6 +2,7 @@
 // Authorization header, so we parse the stream ourselves.
 
 import { ApiPath, Meili, MeiliError } from "../api/meili";
+import { whenOnline } from "../state/app";
 
 export interface SseHandlers {
   onData: (data: string, event?: string) => void;
@@ -19,7 +20,7 @@ export async function streamSse(
   handlers: SseHandlers,
   opts: { path?: Record<string, string>; body?: unknown; signal?: AbortSignal } = {},
 ) {
-  const res = await fetch(m.resolve(path, { path: opts.path }), {
+  const res = await m.fetch(m.resolve(path, { path: opts.path }), {
     method,
     headers: { ...m.headers(opts.body !== undefined ? "application/json" : undefined), Accept: "text/event-stream" },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
@@ -64,6 +65,8 @@ export function liveSse(open: (signal: AbortSignal) => Promise<void>, onFatal: (
   (async () => {
     let backoff = 1000;
     while (!ctrl.signal.aborted) {
+      // Don't hammer a server that's known to be down; resume as soon as it's back.
+      if (!(await whenOnline(ctrl.signal))) return;
       try {
         await open(ctrl.signal);
         backoff = 1000;

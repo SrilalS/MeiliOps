@@ -1,7 +1,7 @@
-import { ErrorBoundary, For, JSX, ParentProps, Show, createSignal, onCleanup, onMount } from "solid-js";
+import { ErrorBoundary, For, JSX, ParentProps, Show, createEffect, createSignal, on, onCleanup, onMount } from "solid-js";
 import { Portal } from "solid-js/web";
-import { dismissToast, setView, toasts } from "../state/app";
-import { MeiliError, errorMessage } from "../api/meili";
+import { dismissToast, online, setView, toasts } from "../state/app";
+import { MeiliError, errorMessage, isNetworkError } from "../api/meili";
 import { IconX } from "./icons";
 
 export function Modal(props: ParentProps<{ title: string; onClose: () => void; actions?: JSX.Element; wide?: boolean }>) {
@@ -93,6 +93,8 @@ export function ApiError(props: { error: unknown; onRetry?: () => void }) {
   const e = () => props.error as MeiliError | Error;
   const code = () => (e() instanceof MeiliError ? (e() as MeiliError).code : undefined);
   const launchFlag = () => /--experimental-[\w-]+/.exec(e()?.message ?? "")?.[0];
+  // Failed because the server was unreachable: retry by itself once the connection is back.
+  createEffect(on(online, (isOnline, wasOnline) => isOnline && wasOnline === false && isNetworkError(props.error) && props.onRetry?.()));
   return (
     <div class="api-error">
       <div class="err">{errorMessage(props.error)}</div>

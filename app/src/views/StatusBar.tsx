@@ -10,6 +10,9 @@ export default function StatusBar() {
       <span>{activeConnection()?.name}</span>
       <span class="muted">{activeConnection()?.url}</span>
       <span class="muted">Meilisearch {server().version?.pkgVersion}</span>
+      <Show when={server().status === "lost"}>
+        <span class="pill status-enqueued">reconnecting</span>
+      </Show>
       <span class="grow" />
       <button class="link" onClick={() => setOpen(!open())}>
         <Show when={runningActivities() > 0} fallback={<>Activity ({activity.length})</>}>

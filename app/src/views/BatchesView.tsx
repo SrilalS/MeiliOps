@@ -1,5 +1,5 @@
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
-import { api, notifyError } from "../state/app";
+import { api, notifyError, online } from "../state/app";
 import VirtualTable, { Column } from "../components/VirtualTable";
 import JsonEditor from "../components/JsonEditor";
 import { formatDate, formatNumber, pretty } from "../components/ui";
@@ -62,7 +62,7 @@ export default function BatchesView() {
     (signal) => streamSse(api(), "GET", "/batches/stream", { onData: (d) => upsert(JSON.parse(d)) }, { signal }),
     () => setMode("polling"),
   );
-  const timer = setInterval(() => mode() === "polling" && batches().length <= 200 && load(), 3000);
+  const timer = setInterval(() => online() && mode() === "polling" && batches().length <= 200 && load(), 3000);
   onCleanup(() => {
     stop();
     clearInterval(timer);
