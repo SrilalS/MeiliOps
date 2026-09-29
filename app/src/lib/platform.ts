@@ -68,3 +68,20 @@ export function downloadText(filename: string, text: string, type = "application
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/**
+ * Ask WebView2 to trim memory while the window is minimized, and restore the normal target
+ * when it comes back. Measured effect: see Research/08-performance-results.md.
+ */
+export async function trimMemoryWhenMinimized() {
+  if (!isTauri) return;
+  const { getCurrentWindow } = await import("@tauri-apps/api/window");
+  const win = getCurrentWindow();
+  let low = false;
+  await win.onResized(async () => {
+    const minimized = await win.isMinimized();
+    if (minimized === low) return;
+    low = minimized;
+    await invoke("webview_memory_low", { low }).catch((e) => console.warn("webview_memory_low", e));
+  });
+}

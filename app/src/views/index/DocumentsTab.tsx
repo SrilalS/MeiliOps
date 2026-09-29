@@ -15,12 +15,12 @@ const MAX_PAGES = 24;
 
 type Doc = Record<string, unknown>;
 
-export default function DocumentsTab(props: { uid: string }) {
+export default function DocumentsTab(props: { uid: string; initialFilter?: string }) {
   const primaryKey = () => indexes().find((i) => i.uid === props.uid)?.primaryKey ?? undefined;
 
-  const [filterInput, setFilterInput] = createSignal("");
+  const [filterInput, setFilterInput] = createSignal(props.initialFilter ?? "");
   const [sortInput, setSortInput] = createSignal("");
-  const [query, setQuery] = createSignal({ filter: "", sort: "" });
+  const [query, setQuery] = createSignal({ filter: props.initialFilter ?? "", sort: "" });
   const [total, setTotal] = createSignal<number>();
   const [error, setError] = createSignal<string>();
   const [version, setVersion] = createSignal(0);

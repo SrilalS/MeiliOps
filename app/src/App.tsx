@@ -21,6 +21,7 @@ import ChatsView from "./views/ChatsView";
 import SearchRulesView from "./views/SearchRulesView";
 import InstancesView from "./views/instances/InstancesView";
 import { loadInstances, stopAllOnExit } from "./state/instances";
+import { trimMemoryWhenMinimized } from "./lib/platform";
 import "./styles.css";
 
 /** Server-level screens that need an active connection. */
@@ -45,6 +46,7 @@ export default function App() {
     loadConnections();
     loadInstances();
     stopAllOnExit();
+    trimMemoryWhenMinimized();
   });
 
   const connected = () => server().status === "ready";

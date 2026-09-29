@@ -8,7 +8,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 1. **100% coverage of Meilisearch's stable API** for the latest stable release. Experimental routes are best-effort. Enterprise-only routes (`/network*`) are out of scope and console-only.
 2. **No Electron.** Tauri 2 + TypeScript (SolidJS). Memory: see `Research/08-performance-results.md`.
 3. Windows 11 x64 first; macOS and Linux must keep building.
-4. **The team writes TypeScript only.** Native code is limited to `app/src-tauri/src/lib.rs` (keychain) and `files.rs` (sandboxed file ops). Prefer Tauri plugins; add Rust only when a plugin is broken or missing, and document why.
+4. **The team writes TypeScript only.** Native code is limited to `app/src-tauri/src/lib.rs` (keychain), `files.rs` (sandboxed file ops) and `memory.rs` (WebView2 memory target, not exposed by Tauri). Prefer Tauri plugins; add Rust only when a plugin is broken or missing, and document why.
 5. API keys live in the OS credential store, never in plain-text config.
 
 ## 🗺️ Layout
@@ -21,9 +21,11 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/src/state/app.ts` | Connections, active client, task tracking (`trackTask`), toasts |
 | `app/src/state/instances.ts` | Local instance manager: binary install, start/stop, launch flags |
 | `app/src/lib/sse.ts` | Fetch-based SSE reader (EventSource can't send auth headers) |
+| `app/src/lib/schema.ts` | Schema analysis of a document sample (Schema tab) |
 | `app/src/views/` | Screens. `views/index/settingsCatalog.ts` lists every settings sub-route |
 | `app/scripts/coverage.mjs` | API coverage report (`npm run coverage`, `--strict` for CI) |
 | `app/scripts/measure-memory.ps1` | Memory of the whole process tree |
+| `.github/workflows/ci.yml` | Typecheck, `coverage --strict`, web build; app builds on Windows (NSIS artifact), macOS, Linux |
 
 ## ⚠️ Gotchas (learned the hard way)
 
@@ -33,6 +35,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - **Capabilities are compiled in.** After editing `capabilities/*.json`, touch `build.rs` or cargo may not rebuild.
 - **`additionalBrowserArgs` in `tauri.conf.json` overrides `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`.** To debug a build over CDP, merge `--remote-debugging-port=9333` in via the `TAURI_CONFIG` env var at build time.
 - Something on this machine already listens on **7700**. The dev server uses **7711**, and local instances check ports before starting.
+- **Sync `#[tauri::command]`s run on the main thread.** Anything that calls `with_webview` and waits for it must be `async`, or it deadlocks (see `memory.rs`).
 - Some experimental features are **launch flags** (logs route, metrics, task streaming); others are runtime toggles (`/experimental-features`). `ApiError` points users to the right one.
 
 ## 🔁 Updating to a new Meilisearch release

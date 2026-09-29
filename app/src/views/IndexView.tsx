@@ -5,16 +5,19 @@ import DocumentsTab from "./index/DocumentsTab";
 import SearchTab from "./index/SearchTab";
 import SettingsTab from "./index/SettingsTab";
 import IndexOverviewTab from "./index/IndexOverviewTab";
+import SchemaTab from "./index/SchemaTab";
 
 const TABS: { id: IndexTab; label: string }[] = [
   { id: "documents", label: "Documents" },
   { id: "search", label: "Search" },
+  { id: "schema", label: "Schema" },
   { id: "settings", label: "Settings" },
   { id: "overview", label: "Index info" },
 ];
 
 export default function IndexView(props: { uid: string }) {
   const tab = () => (view() as { tab: IndexTab }).tab ?? "documents";
+  const filter = () => (view() as { filter?: string }).filter;
   const info = () => indexes().find((i) => i.uid === props.uid);
 
   return (
@@ -29,10 +32,13 @@ export default function IndexView(props: { uid: string }) {
       {/* Keyed on uid so every tab resets cleanly when switching indexes. */}
       <Switch>
         <Match when={tab() === "documents" && props.uid} keyed>
-          {(uid) => <DocumentsTab uid={uid} />}
+          {(uid) => <DocumentsTab uid={uid} initialFilter={filter()} />}
         </Match>
         <Match when={tab() === "search" && props.uid} keyed>
           {(uid) => <SearchTab uid={uid} />}
+        </Match>
+        <Match when={tab() === "schema" && props.uid} keyed>
+          {(uid) => <SchemaTab uid={uid} />}
         </Match>
         <Match when={tab() === "settings" && props.uid} keyed>
           {(uid) => <SettingsTab uid={uid} />}

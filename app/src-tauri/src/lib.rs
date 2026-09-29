@@ -2,8 +2,10 @@
 // - the OS credential store (Windows Credential Manager / macOS Keychain / Secret Service)
 //   so API keys never land in plain-text config
 // - `files.rs`: sandboxed file ops for the local instance manager
+// - `memory.rs`: WebView2 memory target while minimized (not exposed by Tauri)
 
 mod files;
+mod memory;
 
 const SERVICE: &str = "io.meiliops.app";
 
@@ -47,7 +49,8 @@ pub fn run() {
             files::app_ensure_dir,
             files::app_remove,
             files::app_replace_file,
-            files::app_sha256
+            files::app_sha256,
+            memory::webview_memory_low
         ])
         .run(tauri::generate_context!())
         .expect("error while running MeiliOps");

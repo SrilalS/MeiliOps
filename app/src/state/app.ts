@@ -28,13 +28,14 @@ export interface ServerInfo {
   error?: string;
 }
 
-export type IndexTab = "documents" | "search" | "settings" | "overview";
+export type IndexTab = "documents" | "search" | "schema" | "settings" | "overview";
 
 export type View =
   | { kind: "welcome" }
   | { kind: "connection-form"; id?: string }
   | { kind: "overview" }
-  | { kind: "index"; uid: string; tab: IndexTab }
+  /** `filter` pre-fills the Documents tab (e.g. from the Schema tab). */
+  | { kind: "index"; uid: string; tab: IndexTab; filter?: string }
   | { kind: "tasks" }
   | { kind: "batches" }
   | { kind: "keys" }

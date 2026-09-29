@@ -1995,6 +1995,8 @@ dependencies = [
  "tauri-plugin-shell",
  "tauri-plugin-store",
  "tauri-plugin-upload",
+ "webview2-com",
+ "windows-core",
 ]
 
 [[package]]

@@ -34,8 +34,20 @@
 
 **Conclusion:** our code accounts for about 20 MB. Everything else is the WebView2 floor. The original 100 MB idle target is not reachable with a web renderer.
 
+## 💤 While minimized (applied in 0.3)
+
+`MemoryUsageTargetLevel = Low` is set while the window is minimized (`src-tauri/src/memory.rs`, policy in `lib/platform.ts`). It pages out rather than frees, so **private bytes stay flat** and the win shows up as physical RAM (working set), which is what Task Manager's "Memory" column tracks.
+
+| Scenario | Renderer working set | Tree working set | Tree private bytes |
+|---|---|---|---|
+| Visible, normal | ~72 MB | ~334 MB | ~136 MB |
+| Visible, target forced to Low (isolates our call) | **~7 MB** | ~269 MB | ~136 MB |
+| Minimized 15 s (our call + Chromium's own backgrounding) | ~19 MB | ~290 MB | ~138 MB |
+| Restored 5 s | ~24 MB | ~295 MB | ~138 MB |
+
+The browser process (~180 MB working set) is not affected by the target level.
+
 ## 🛠️ Remaining levers (not yet applied)
 
 1. `--disable-gpu`: about −12 MB, at the cost of software-rendered scrolling
-2. WebView2 `MemoryUsageTargetLevel = Low` when minimized or unfocused: big cuts while in the background (small Rust addition via `with_webview`)
-3. Drop crashpad (`--disable-breakpad`): about −7 MB, but we lose crash dumps
+2. Drop crashpad (`--disable-breakpad`): about −7 MB, but we lose crash dumps
