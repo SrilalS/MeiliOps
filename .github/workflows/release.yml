@@ -118,10 +118,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.rust-target }}
+      # Restore-only: the cache is kept warm on main by rust-cache.yml. Tag builds can read main's
+      # caches but not each other's, so saving here would only waste the 10 GB cache quota.
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: app/src-tauri
-          key: ${{ matrix.rust-target }}
+          shared-key: tauri-${{ matrix.os }}-${{ matrix.rust-target }}
+          save-if: false
       - name: Linux system libraries
         if: runner.os == 'Linux'
         working-directory: .

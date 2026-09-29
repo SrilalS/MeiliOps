@@ -1,0 +1,72 @@
+name: Rust cache
+
+# Keeps a compiled-dependency cache on main so release builds start warm.
+# GitHub scopes caches by ref: a tag build can restore caches from the default branch but not
+# from other tags, so without this every release compiles ~290 crates from scratch.
+# This builds the app (no installers, nothing published) only when Rust dependencies change,
+# and weekly so the cache isn't evicted after 7 days without use.
+# Measurements: Research/09-ci-build-speed.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - app/src-tauri/Cargo.toml
+      - app/src-tauri/Cargo.lock
+      - .github/workflows/rust-cache.yml
+  schedule:
+    - cron: "17 3 * * 1" # Mondays 03:17 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: rust-cache
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  warm:
+    name: Warm (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      # Must match the build matrix in release.yml: the cache key is built from os + rust-target.
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+          - name: macOS Apple Silicon
+            os: macos-latest
+            rust-target: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin
+          - name: macOS Intel
+            os: macos-latest
+            rust-target: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin
+          - name: Linux x64
+            os: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+          shared-key: tauri-${{ matrix.os }}-${{ matrix.rust-target }}
+      - name: Linux system libraries
+        if: runner.os == 'Linux'
+        working-directory: .
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libdbus-1-dev
+      - run: npm ci
+      # Same command and features as the release build (tauri-action runs `tauri build`), minus bundling.
+      - run: npm run tauri build -- --no-bundle ${{ matrix.args }}

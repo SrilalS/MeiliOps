@@ -40,4 +40,5 @@ Tags with a suffix (`v0.4.0-beta.1`) are published as pre-releases. Re-running a
 ## Other workflows
 
 - `ci.yml`: typecheck and `coverage --strict` on every push and pull request. No app builds.
+- `rust-cache.yml`: compiles the app on `main` (without making installers) when Rust dependencies change and once a week, so release builds restore compiled dependencies instead of starting cold. GitHub only lets tag builds reuse caches from the default branch, which is why this can't happen in the release itself.
 - `docs.yml`: builds this documentation site and deploys it to GitHub Pages when `docs/` changes on `main`.

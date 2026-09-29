@@ -13,7 +13,10 @@ edition = "2021"
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "meiliops_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# Desktop only needs the rlib. The template's "staticlib" and "cdylib" are for iOS/Android, and
+# with LTO each costs a full whole-program optimization pass: dropping them cut a cold release
+# build from 503 s to 373 s with an identical binary (Research/09-ci-build-speed.md).
+crate-type = ["rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

@@ -31,6 +31,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/scripts/measure-memory.ps1` | Memory of the whole process tree |
 | `.github/workflows/ci.yml` | Push/PR: typecheck + `coverage --strict` only (no app builds) |
 | `.github/workflows/release.yml` | Tag `v*`: checks, draft release, builds (Windows NSIS, macOS arm64 + x64 DMG, Linux deb/rpm/AppImage), then publishes |
+| `.github/workflows/rust-cache.yml` | Keeps a compiled Rust dependency cache on `main` (on `Cargo.lock` changes + weekly) so releases start warm. Builds nothing that ships |
 | `.github/workflows/docs.yml` | Builds `docs/` (VitePress) and deploys it to GitHub Pages on changes to `main` |
 | `docs/` | User and developer documentation site. Screenshots in `docs/public/screenshots/`. Keep it in sync when features change |
 | `README.md` | Project front page (features, install, screenshots) |
@@ -43,6 +44,8 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - **Capabilities are compiled in.** After editing `capabilities/*.json`, touch `build.rs` or cargo may not rebuild.
 - **`additionalBrowserArgs` in `tauri.conf.json` overrides `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`.** To debug a build over CDP, merge `--remote-debugging-port=9333` in via the `TAURI_CONFIG` env var at build time.
 - Something on this machine already listens on **7700**. The dev server uses **7711**, and local instances check ports before starting.
+- **CI caches are ref-scoped.** Tag builds can read `main`'s caches but not other tags', so `rust-cache.yml` warms them on `main` and `release.yml` only restores (`save-if: false`). Both must use the same `shared-key` (`tauri-<os>-<rust-target>`), or releases miss.
+- **Keep `crate-type = ["rlib"]`.** The template's `staticlib`/`cdylib` (mobile only) each add a full LTO pass: +130 s per build, same binary.
 - **Sync `#[tauri::command]`s run on the main thread.** Anything that calls `with_webview` and waits for it must be `async`, or it deadlocks (see `memory.rs`).
 - **The window has no native frame on Windows/Linux** (`decorations: false`); `TitleBar.tsx` draws the controls. macOS keeps native traffic lights via `tauri.macos.conf.json` (arrays in platform configs replace, so that file repeats the whole window). Empty title-bar areas need `data-tauri-drag-region`.
 - **Connection states** (`state/app.ts`): `idle → connecting → ready ⇄ lost`, or `error`. `lost` means the server stopped answering mid-session: views stay mounted, a watchdog probes `/health`, and `ApiError` panels retry on their own once it's back. Use `connected()` (ready or lost) to decide what renders, and `online()` to gate polling. Open the connection form with `openConnectionForm()`, never `setView`, so Cancel returns to where the user was.
