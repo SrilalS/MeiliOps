@@ -4,16 +4,27 @@ name: Release
 #   git tag v0.3.0 && git push origin v0.3.0
 # The tag must match the app version in package.json, Cargo.toml and tauri.conf.json.
 # Tags with a suffix (v0.3.0-beta.1) are published as pre-releases.
+#
+# To rebuild an existing tag's release (e.g. after fixing this workflow), run it manually from
+# the Actions tab with that tag. The tag's code is built with the workflow from the default branch.
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build and attach to its release (e.g. v0.3.0)
+        required: true
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
 
 defaults:
   run:
@@ -27,6 +38,8 @@ jobs:
       release_id: ${{ steps.draft.outputs.release_id }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -36,7 +49,7 @@ jobs:
         run: |
           node -e '
             const fs = require("fs");
-            const tag = process.env.GITHUB_REF_NAME.replace(/^v/, "");
+            const tag = process.env.TAG.replace(/^v/, "");
             const versions = {
               "package.json": require("./package.json").version,
               "tauri.conf.json": require("./src-tauri/tauri.conf.json").version,
@@ -50,20 +63,25 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run coverage -- --strict
-      - name: Create draft release
+      - name: Create (or reuse) the release
         id: draft
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          find_id() { gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\") | .id"; }
-          id=$(find_id)
-          # Re-running the workflow reuses the existing draft instead of failing.
+          # Reuse the tag's release if one exists: published releases resolve by tag; a draft
+          # has no tag until it's published ("untagged-…"), so match drafts by name instead.
+          id=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json databaseId --jq .databaseId 2>/dev/null || true)
+          [ -z "$id" ] && id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.draft and .name == \"MeiliOps $TAG\") | .id" | head -n1)
           if [ -z "$id" ]; then
-            args=(--draft --generate-notes --verify-tag --title "MeiliOps $GITHUB_REF_NAME")
-            [[ "$GITHUB_REF_NAME" == *-* ]] && args+=(--prerelease)
-            gh release create "$GITHUB_REF_NAME" "${args[@]}"
-            id=$(find_id)
+            prerelease=false
+            [[ "$TAG" == *-* ]] && prerelease=true
+            # Take the id from the create response itself: looking it up again right after
+            # creating is what left v0.3.0 without any files.
+            id=$(gh api -X POST "repos/$GITHUB_REPOSITORY/releases" \
+              -f tag_name="$TAG" -f name="MeiliOps $TAG" \
+              -F draft=true -F prerelease=$prerelease -F generate_release_notes=true --jq .id)
           fi
+          [ -n "$id" ] && [ "$id" != "null" ] || { echo "::error::Could not create or find the release for $TAG"; exit 1; }
           echo "release_id=$id" >> "$GITHUB_OUTPUT"
 
   build:
@@ -90,6 +108,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -127,4 +147,8 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
         working-directory: .
-        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false
+        run: |
+          # Never publish a release without files.
+          count=$(gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.check.outputs.release_id }}" --jq '.assets | length')
+          [ "$count" -gt 0 ] || { echo "::error::Release has no assets; not publishing"; exit 1; }
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/${{ needs.check.outputs.release_id }}" -F draft=false --jq .html_url
