@@ -7,6 +7,7 @@ import { copyText, downloadText } from "../../lib/platform";
 import AddDocumentsDialog from "./AddDocumentsDialog";
 import DeleteByIdsDialog from "./DeleteByIdsDialog";
 import EditByFunctionDialog from "./EditByFunctionDialog";
+import { IconChevronDown, IconPlus, IconRefresh, IconX } from "../../components/icons";
 
 const PAGE = 100;
 const MAX_COLS = 40;
@@ -198,18 +199,20 @@ export default function DocumentsTab(props: { uid: string; initialFilter?: strin
           onKeyDown={(e) => e.key === "Enter" && apply()}
         />
         <button onClick={apply}>Apply</button>
-        <button onClick={() => reload(true)} title="Reload">
-          ↻
+        <button class="square" onClick={() => reload(true)} title="Reload">
+          <IconRefresh />
         </button>
         <span class="sep" />
         <button class="primary" onClick={() => setDialog("add")}>
-          + Add documents
+          <IconPlus /> Add documents
         </button>
         <button onClick={exportAll} disabled={exporting()}>
           {exporting() ? "Exporting…" : "Export JSON"}
         </button>
         <details class="menu">
-          <summary>More ▾</summary>
+          <summary>
+            More <IconChevronDown />
+          </summary>
           <div class="menu-items">
             <button onClick={() => setDialog("edit-fn")}>Edit with function… (experimental)</button>
             <button onClick={() => setDialog("delete-ids")}>Delete by IDs…</button>
@@ -250,7 +253,7 @@ export default function DocumentsTab(props: { uid: string; initialFilter?: strin
               <b class="ellipsis">Document {String(docId() ?? "")}</b>
               <span class="grow" />
               <button class="icon-btn" onClick={() => setSelected(undefined)} title="Close">
-                ✕
+                <IconX />
               </button>
             </div>
             <JsonEditor value={editText()} onChange={setEditText} onSubmit={saveDoc} class="grow" />

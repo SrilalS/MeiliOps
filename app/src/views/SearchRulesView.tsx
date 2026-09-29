@@ -2,6 +2,7 @@ import { For, Show, createResource, createSignal } from "solid-js";
 import { api, notifyError, trackTask } from "../state/app";
 import JsonEditor from "../components/JsonEditor";
 import { ApiError, Confirm, Modal, formatDate, formatNumber, pretty } from "../components/ui";
+import { IconPlus, IconRefresh } from "../components/icons";
 
 interface Rule {
   uid: string;
@@ -67,12 +68,14 @@ export default function SearchRulesView() {
         <h2>Search rules</h2>
         <span class="muted small">Dynamic search rules pin, boost or demote documents when conditions match. Experimental API.</span>
         <span class="grow" />
-        <button onClick={refetch}>↻</button>
+        <button class="square" onClick={refetch} title="Refresh">
+          <IconRefresh />
+        </button>
         <button class="danger" onClick={() => setConfirm({ kind: "all" })}>
           Delete all…
         </button>
         <button class="primary" onClick={() => open()}>
-          + New rule
+          <IconPlus /> New rule
         </button>
       </div>
       <div class="toolbar">

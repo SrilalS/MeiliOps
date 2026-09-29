@@ -2,6 +2,7 @@ import { ErrorBoundary, For, JSX, ParentProps, Show, createSignal, onCleanup, on
 import { Portal } from "solid-js/web";
 import { dismissToast, setView, toasts } from "../state/app";
 import { MeiliError, errorMessage } from "../api/meili";
+import { IconX } from "./icons";
 
 export function Modal(props: ParentProps<{ title: string; onClose: () => void; actions?: JSX.Element; wide?: boolean }>) {
   const onKey = (e: KeyboardEvent) => e.key === "Escape" && props.onClose();
@@ -14,7 +15,7 @@ export function Modal(props: ParentProps<{ title: string; onClose: () => void; a
           <div class="modal-head">
             <h3>{props.title}</h3>
             <button class="icon-btn" onClick={props.onClose} aria-label="Close">
-              ✕
+              <IconX />
             </button>
           </div>
           <div class="modal-body">{props.children}</div>
@@ -180,6 +181,19 @@ export function formatDate(s: string | null | undefined): string {
   if (!s) return "—";
   const d = new Date(s);
   return isNaN(d.getTime()) ? s : d.toLocaleString();
+}
+
+/** "5 min ago" style; falls back to the full date after a week. */
+export function formatAgo(s: string | null | undefined): string {
+  if (!s) return "—";
+  const d = new Date(s);
+  const sec = (Date.now() - d.getTime()) / 1000;
+  if (isNaN(sec)) return s;
+  if (sec < 60) return "just now";
+  if (sec < 3600) return `${Math.floor(sec / 60)} min ago`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)} h ago`;
+  if (sec < 7 * 86400) return `${Math.floor(sec / 86400)} d ago`;
+  return d.toLocaleDateString();
 }
 
 export function formatNumber(n: number | undefined): string {

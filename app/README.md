@@ -4,6 +4,8 @@ A native desktop admin app for [Meilisearch](https://www.meilisearch.com), in th
 
 ## Features
 
+- **Look and feel:** Meilisearch-inspired palette with light, dark and system themes; a custom title bar with a connection switcher (VS Code / Zed style)
+
 - **Connections:** multiple servers, color-coded. API keys are stored in the OS credential store
 - **Overview:** health, version, DB size, per-index stats, dumps and snapshots
 - **Documents:** virtualized grid (only visible rows are rendered), filter and sort, JSON editor, add/replace/update from JSON, NDJSON or CSV files, delete by ID/filter/all, export

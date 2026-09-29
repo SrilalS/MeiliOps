@@ -4,6 +4,7 @@ import VirtualTable, { Column } from "../components/VirtualTable";
 import JsonEditor from "../components/JsonEditor";
 import { formatDate, formatNumber, pretty } from "../components/ui";
 import { liveSse, streamSse } from "../lib/sse";
+import { IconRefresh, IconX } from "../components/icons";
 
 interface Batch {
   uid: number;
@@ -111,7 +112,9 @@ export default function BatchesView() {
         <span class="muted">{formatNumber(total())} total</span>
         <span class="muted small">{mode() === "stream" ? "● streaming" : "○ polling"}</span>
         <span class="grow" />
-        <button onClick={load}>↻</button>
+        <button class="square" onClick={load} title="Refresh">
+          <IconRefresh />
+        </button>
       </div>
       <div class="split">
         <div class="split-main">
@@ -123,7 +126,7 @@ export default function BatchesView() {
               <b>Batch {detail()!.uid}</b>
               <span class="grow" />
               <button class="icon-btn" onClick={() => (setSelected(undefined), setDetail(undefined))}>
-                ✕
+                <IconX />
               </button>
             </div>
             <JsonEditor value={pretty(detail())} readOnly class="grow" />

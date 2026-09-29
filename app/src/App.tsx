@@ -1,9 +1,10 @@
-import { Component, Match, Show, Switch, onMount } from "solid-js";
+import { Component, For, Match, Show, Switch, onMount } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import Sidebar from "./views/Sidebar";
+import TitleBar from "./views/TitleBar";
 import StatusBar from "./views/StatusBar";
 import { Toasts, Empty, Spinner, ViewBoundary } from "./components/ui";
-import { View, loadConnections, server, setView, view } from "./state/app";
+import { View, connect, connections, loadConnections, server, setView, view } from "./state/app";
 import ConnectionForm from "./views/ConnectionForm";
 import OverviewView from "./views/OverviewView";
 import IndexView from "./views/IndexView";
@@ -22,7 +23,10 @@ import SearchRulesView from "./views/SearchRulesView";
 import InstancesView from "./views/instances/InstancesView";
 import { loadInstances, stopAllOnExit } from "./state/instances";
 import { trimMemoryWhenMinimized } from "./lib/platform";
+import "./fonts.css";
 import "./styles.css";
+import { loadTheme } from "./state/theme";
+import { IconPlus, IconServer } from "./components/icons";
 
 /** Server-level screens that need an active connection. */
 const CONNECTED_VIEWS: Partial<Record<View["kind"], Component>> = {
@@ -43,6 +47,7 @@ const CONNECTED_VIEWS: Partial<Record<View["kind"], Component>> = {
 
 export default function App() {
   onMount(() => {
+    loadTheme();
     loadConnections();
     loadInstances();
     stopAllOnExit();
@@ -53,6 +58,7 @@ export default function App() {
 
   return (
     <div class="app">
+      <TitleBar />
       <Sidebar />
       <main class="main">
         <Switch>
@@ -102,15 +108,33 @@ export default function App() {
 
 function Welcome() {
   return (
-    <Empty title="MeiliOps">
-      <p>A native admin app for Meilisearch.</p>
-      <p>Pick a connection on the left, add a new one, or run Meilisearch locally.</p>
+    <div class="welcome">
+      <img class="welcome-logo" src="/icon.svg" alt="" />
+      <h1>MeiliOps</h1>
+      <p class="muted">A fast, native admin app for Meilisearch.</p>
+      <Show when={connections.length > 0}>
+        <div class="welcome-conns">
+          <For each={connections}>
+            {(c) => (
+              <button class="welcome-conn" onClick={() => connect(c.id)}>
+                <span class="dot" style={{ background: c.color }} />
+                <span class="grow ellipsis">
+                  <b>{c.name}</b>
+                  <span class="popover-sub">{c.url}</span>
+                </span>
+              </button>
+            )}
+          </For>
+        </div>
+      </Show>
       <div class="row">
         <button class="primary" onClick={() => setView({ kind: "connection-form" })}>
-          + New connection
+          <IconPlus /> New connection
         </button>
-        <button onClick={() => setView({ kind: "instances" })}>Local instances</button>
+        <button onClick={() => setView({ kind: "instances" })}>
+          <IconServer /> Run Meilisearch locally
+        </button>
       </div>
-    </Empty>
+    </div>
   );
 }

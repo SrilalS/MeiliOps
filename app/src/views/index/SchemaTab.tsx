@@ -1,6 +1,7 @@
 import { For, Show, createMemo, createResource, createSignal, onCleanup } from "solid-js";
 import { api, indexes, notifyError, setView, trackTask } from "../../state/app";
 import { ApiError, Confirm, Spinner, formatNumber } from "../../components/ui";
+import { IconChevronRight } from "../../components/icons";
 import { FieldStats, SchemaAnalyzer, SchemaResult, ValueType, filterFor, isUnique, looksCategorical, topValues } from "../../lib/schema";
 
 type Doc = Record<string, unknown>;
@@ -136,8 +137,10 @@ export default function SchemaTab(props: { uid: string }) {
                   <>
                     <tr class="clickable" classList={{ selected: isOpen() }} onClick={() => setOpen(isOpen() ? undefined : f.path)}>
                       <td class="mono nowrap" style={{ "padding-left": `${8 + f.depth * 16}px` }}>
-                        {isOpen() ? "▾ " : "▸ "}
-                        {f.depth ? f.path.slice(f.path.lastIndexOf(".") + 1) : f.path}
+                        <span class="schema-name">
+                          <IconChevronRight class={isOpen() ? "schema-chev open" : "schema-chev"} />
+                          {f.depth ? f.path.slice(f.path.lastIndexOf(".") + 1) : f.path}
+                        </span>
                       </td>
                       <td>
                         <Presence value={f.present} of={result()!.sampled} />

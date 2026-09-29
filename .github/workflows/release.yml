@@ -1,0 +1,130 @@
+name: Release
+
+# Push a version tag to publish a release:
+#   git tag v0.3.0 && git push origin v0.3.0
+# The tag must match the app version in package.json, Cargo.toml and tauri.conf.json.
+# Tags with a suffix (v0.3.0-beta.1) are published as pre-releases.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  check:
+    name: Checks + draft release
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.draft.outputs.release_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Tag matches app version
+        run: |
+          node -e '
+            const fs = require("fs");
+            const tag = process.env.GITHUB_REF_NAME.replace(/^v/, "");
+            const versions = {
+              "package.json": require("./package.json").version,
+              "tauri.conf.json": require("./src-tauri/tauri.conf.json").version,
+              "Cargo.toml": fs.readFileSync("src-tauri/Cargo.toml", "utf8").match(/^version = "(.+)"/m)[1],
+            };
+            const bad = Object.entries(versions).filter(([, v]) => v !== tag);
+            if (bad.length) {
+              console.error(`Tag v${tag} does not match: ` + bad.map(([f, v]) => `${f}=${v}`).join(", "));
+              process.exit(1);
+            }'
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run coverage -- --strict
+      - name: Create draft release
+        id: draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          find_id() { gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\") | .id"; }
+          id=$(find_id)
+          # Re-running the workflow reuses the existing draft instead of failing.
+          if [ -z "$id" ]; then
+            args=(--draft --generate-notes --verify-tag --title "MeiliOps $GITHUB_REF_NAME")
+            [[ "$GITHUB_REF_NAME" == *-* ]] && args+=(--prerelease)
+            gh release create "$GITHUB_REF_NAME" "${args[@]}"
+            id=$(find_id)
+          fi
+          echo "release_id=$id" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+            args: --bundles nsis
+          - name: macOS Apple Silicon
+            os: macos-latest
+            rust-target: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin --bundles dmg
+          - name: macOS Intel
+            os: macos-latest
+            rust-target: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin --bundles dmg
+          - name: Linux x64
+            os: ubuntu-22.04
+            args: --bundles deb,rpm,appimage
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+          key: ${{ matrix.rust-target }}
+      - name: Linux system libraries
+        if: runner.os == 'Linux'
+        working-directory: .
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libdbus-1-dev
+      - run: npm ci
+      - name: Build and upload to the draft release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          projectPath: app
+          releaseId: ${{ needs.check.outputs.release_id }}
+          args: ${{ matrix.args }}
+
+  publish:
+    name: Publish release
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    steps:
+      # Only reached when every platform built, so a release never goes out half-empty.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: .
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false

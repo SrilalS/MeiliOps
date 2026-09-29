@@ -2,6 +2,7 @@ import { For, Show, createResource, createSignal } from "solid-js";
 import { api, notify, notifyError } from "../state/app";
 import { ApiError, Confirm, Modal, Spinner, pretty } from "../components/ui";
 import JsonEditor from "../components/JsonEditor";
+import { IconPlus, IconRefresh } from "../components/icons";
 
 interface Webhook {
   uuid: string;
@@ -45,9 +46,11 @@ export default function WebhooksView() {
         <h2>Webhooks</h2>
         <span class="muted small">Meilisearch calls these URLs when tasks finish.</span>
         <span class="grow" />
-        <button onClick={refetch}>↻</button>
+        <button class="square" onClick={refetch} title="Refresh">
+          <IconRefresh />
+        </button>
         <button class="primary" onClick={() => open()}>
-          + New webhook
+          <IconPlus /> New webhook
         </button>
       </div>
       <Show when={!hooks.error} fallback={<ApiError error={hooks.error} />}>

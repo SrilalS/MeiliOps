@@ -2,7 +2,8 @@ import { For, Show, createResource, createSignal } from "solid-js";
 import { api, notify, refreshIndexes, server, setView, trackTask } from "../state/app";
 import { errorMessage } from "../api/meili";
 import { copyText } from "../lib/platform";
-import { ApiError, Spinner, Stat, formatBytes, formatDate, formatNumber } from "../components/ui";
+import { ApiError, Spinner, Stat, formatBytes, formatAgo, formatDate, formatNumber } from "../components/ui";
+import { IconRefresh } from "../components/icons";
 
 interface GlobalStats {
   databaseSize: number;
@@ -63,7 +64,7 @@ export default function OverviewView() {
             refreshIndexes();
           }}
         >
-          ↻ Refresh
+          <IconRefresh /> Refresh
         </button>
         <button onClick={dump}>Create dump</button>
         <button onClick={snapshot}>Create snapshot</button>
@@ -76,7 +77,7 @@ export default function OverviewView() {
         <Stat label="Documents" value={formatNumber(stats() ? Object.values(stats()!.indexes).reduce((s, i) => s + i.numberOfDocuments, 0) : undefined)} />
         <Stat label="Database size" value={formatBytes(stats()?.databaseSize)} />
         <Stat label="Used DB size" value={formatBytes(stats()?.usedDatabaseSize)} />
-        <Stat label="Last update" value={<span class="small">{formatDate(stats()?.lastUpdate)}</span>} />
+        <Stat label="Last update" value={<span title={formatDate(stats()?.lastUpdate)}>{formatAgo(stats()?.lastUpdate)}</span>} />
       </div>
 
       <div class="muted small">

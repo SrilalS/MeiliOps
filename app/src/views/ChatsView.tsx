@@ -4,6 +4,7 @@ import { errorMessage } from "../api/meili";
 import JsonEditor from "../components/JsonEditor";
 import { ApiError, Confirm, Modal, Tabs, pretty } from "../components/ui";
 import { streamSse } from "../lib/sse";
+import { IconPlus, IconRefresh } from "../components/icons";
 
 interface Msg {
   role: "user" | "assistant" | "system";
@@ -34,9 +35,11 @@ export default function ChatsView() {
         <h2>Chats</h2>
         <span class="muted small">Conversational search (RAG). Needs the chatCompletions experimental feature and an LLM provider in the workspace settings.</span>
         <span class="grow" />
-        <button onClick={refetch}>↻</button>
+        <button class="square" onClick={refetch} title="Refresh">
+          <IconRefresh />
+        </button>
         <button class="primary" onClick={() => setCreating(true)}>
-          + New workspace
+          <IconPlus /> New workspace
         </button>
       </div>
       <Show when={!list.error} fallback={<ApiError error={list.error} />}>

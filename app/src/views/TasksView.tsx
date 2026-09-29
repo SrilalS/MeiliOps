@@ -5,6 +5,7 @@ import VirtualTable, { Column } from "../components/VirtualTable";
 import JsonEditor from "../components/JsonEditor";
 import { Confirm, StatusPill, formatDate, formatNumber, pretty } from "../components/ui";
 import { liveSse, streamSse } from "../lib/sse";
+import { IconRefresh, IconX } from "../components/icons";
 
 const STATUSES = ["enqueued", "processing", "succeeded", "failed", "canceled"];
 
@@ -131,7 +132,9 @@ export default function TasksView() {
         <span class="muted small" title={mode() === "polling" ? "Start Meilisearch with --experimental-enable-tasks-streaming-route for push updates" : "Server-sent events"}>
           {mode() === "stream" ? "● streaming" : "○ polling"}
         </span>
-        <button onClick={load}>↻</button>
+        <button class="square" onClick={load} title="Refresh">
+          <IconRefresh />
+        </button>
       </div>
       <div class="toolbar">
         <select value={status()} onChange={(e) => (setStatus(e.currentTarget.value), load())}>
@@ -178,7 +181,7 @@ export default function TasksView() {
               </Show>
               <button onClick={loadPayload}>Payload</button>
               <button class="icon-btn" onClick={() => setSelected(undefined)}>
-                ✕
+                <IconX />
               </button>
             </div>
             <JsonEditor value={payload() ?? pretty(task())} readOnly class="grow" />

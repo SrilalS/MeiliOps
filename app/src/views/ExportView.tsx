@@ -1,5 +1,6 @@
 import { For, createSignal } from "solid-js";
 import { api, connections, activeId, getConnectionKey, indexes, trackTask } from "../state/app";
+import { IconPlus, IconX } from "../components/icons";
 
 interface Row {
   pattern: string;
@@ -69,7 +70,7 @@ export default function ExportView() {
                   <input type="checkbox" checked={r.overrideSettings} onChange={(e) => update(i(), { overrideSettings: e.currentTarget.checked })} /> override settings
                 </label>
                 <button class="icon-btn" onClick={() => setRows(rows().filter((_, j) => j !== i()))}>
-                  ✕
+                  <IconX />
                 </button>
               </div>
             )}
@@ -78,7 +79,8 @@ export default function ExportView() {
             <For each={indexes()}>{(i) => <option value={i.uid} />}</For>
           </datalist>
           <div>
-            <button onClick={() => setRows([...rows(), { pattern: "", filter: "", overrideSettings: false }])}>+ Add pattern</button>
+            <button onClick={() => setRows([...rows(), { pattern: "", filter: "", overrideSettings: false }])}>
+              <IconPlus /> Add pattern</button>
           </div>
         </div>
         <div class="row form-actions">

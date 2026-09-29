@@ -3,6 +3,7 @@ import { api } from "../../state/app";
 import { errorMessage } from "../../api/meili";
 import JsonEditor from "../../components/JsonEditor";
 import { Tabs, formatNumber, pretty } from "../../components/ui";
+import { IconX } from "../../components/icons";
 
 // Private-use markers so highlighted text can be rendered without innerHTML
 // (document content is untrusted).
@@ -272,7 +273,7 @@ export default function SearchTab(props: { uid: string }) {
             <b>Similar to {String(similar()!.id)}</b>
             <span class="grow" />
             <button class="icon-btn" onClick={() => setSimilar(undefined)}>
-              ✕
+              <IconX />
             </button>
           </div>
           <Show when={similar()!.error}>

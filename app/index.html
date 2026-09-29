@@ -6,6 +6,14 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <title>MeiliOps</title>
+    <script>
+      // Apply the saved theme before first paint (see src/state/theme.ts).
+      try {
+        var m = localStorage.getItem("meiliops:theme");
+        var dark = m === "dark" || (m !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      } catch (e) {}
+    </script>
   </head>
 
   <body>

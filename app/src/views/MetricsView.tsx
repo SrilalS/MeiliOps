@@ -1,6 +1,7 @@
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import { api } from "../state/app";
 import { ApiError, Stat, formatBytes, formatNumber } from "../components/ui";
+import { IconRefresh } from "../components/icons";
 
 interface Sample {
   name: string;
@@ -75,7 +76,9 @@ export default function MetricsView() {
         <label class="inline-label">
           <input type="checkbox" checked={auto()} onChange={(e) => setAuto(e.currentTarget.checked)} /> refresh every 5 s
         </label>
-        <button onClick={load}>↻</button>
+        <button class="square" onClick={load} title="Refresh">
+          <IconRefresh />
+        </button>
       </div>
       <Show when={err()}>
         <ApiError error={err()} onRetry={load} />

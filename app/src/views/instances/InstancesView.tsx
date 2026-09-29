@@ -18,6 +18,7 @@ import {
 } from "../../state/instances";
 import { notify, notifyError } from "../../state/app";
 import InstanceDialog from "./InstanceDialog";
+import { IconPlus, IconX } from "../../components/icons";
 
 export default function InstancesView() {
   if (!isTauri)
@@ -81,7 +82,7 @@ export default function InstancesView() {
         <span class="muted small">Run and manage Meilisearch on this computer.</span>
         <span class="grow" />
         <button class="primary" disabled={!binary().path} onClick={() => setEditing({ inst: newInstanceTemplate(), isNew: true })}>
-          + New instance
+          <IconPlus /> New instance
         </button>
       </div>
 
@@ -191,7 +192,7 @@ export default function InstancesView() {
               <b>Logs — {instances.find((i) => i.id === id())?.name}</b>
               <span class="grow" />
               <button class="icon-btn" onClick={() => setLogsFor(undefined)}>
-                ✕
+                <IconX />
               </button>
             </div>
             <div

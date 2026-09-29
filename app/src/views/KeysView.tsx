@@ -4,6 +4,7 @@ import { ApiError, Confirm, Modal, Spinner, formatDate, pretty } from "../compon
 import JsonEditor from "../components/JsonEditor";
 import { copyText } from "../lib/platform";
 import { signTenantToken } from "../lib/tenantToken";
+import { IconClipboard, IconEye, IconEyeOff, IconInfo, IconPencil, IconPlus, IconRefresh, IconTicket, IconTrash } from "../components/icons";
 
 interface ApiKey {
   uid: string;
@@ -50,9 +51,11 @@ export default function KeysView() {
       <div class="page-head">
         <h2>API keys</h2>
         <span class="grow" />
-        <button onClick={refetch}>↻</button>
+        <button class="square" onClick={refetch} title="Refresh">
+          <IconRefresh />
+        </button>
         <button class="primary" onClick={() => setDialog({ kind: "create" })}>
-          + New key
+          <IconPlus /> New key
         </button>
       </div>
       <Show when={!keys.error} fallback={<ApiError error={keys.error} />}>
@@ -76,32 +79,36 @@ export default function KeysView() {
                       <b>{k.name ?? <span class="muted">(unnamed)</span>}</b>
                       <div class="muted small">{k.description}</div>
                     </td>
-                    <td class="mono small">
-                      {reveal()[k.uid] ? k.key : k.key.slice(0, 8) + "••••••••"}{" "}
-                      <button class="link small" onClick={() => setReveal({ ...reveal(), [k.uid]: !reveal()[k.uid] })}>
-                        {reveal()[k.uid] ? "hide" : "show"}
-                      </button>{" "}
-                      <button class="link small" onClick={() => copyText(k.key).then(() => notify("info", "Key copied"))}>
-                        copy
-                      </button>
+                    <td class="nowrap">
+                      <span class="key-cell">
+                        <code>{reveal()[k.uid] ? k.key : k.key.slice(0, 8) + "••••••••"}</code>
+                        <button class="icon-btn" title={reveal()[k.uid] ? "Hide key" : "Show key"} onClick={() => setReveal({ ...reveal(), [k.uid]: !reveal()[k.uid] })}>
+                          <Show when={reveal()[k.uid]} fallback={<IconEye />}>
+                            <IconEyeOff />
+                          </Show>
+                        </button>
+                        <button class="icon-btn" title="Copy key" onClick={() => copyText(k.key).then(() => notify("info", "Key copied"))}>
+                          <IconClipboard />
+                        </button>
+                      </span>
                     </td>
                     <td class="small">{k.actions.join(", ")}</td>
                     <td class="small">{k.indexes.join(", ")}</td>
                     <td class="small">{k.expiresAt ? formatDate(k.expiresAt) : <span class="muted">never</span>}</td>
-                    <td class="nowrap">
-                      <button class="link small" onClick={() => setDialog({ kind: "view", key: k })}>
-                        details
-                      </button>{" "}
-                      <button class="link small" onClick={() => setDialog({ kind: "edit", key: k })}>
-                        edit
-                      </button>{" "}
+                    <td class="nowrap row-actions">
+                      <button class="icon-btn" title="Details" onClick={() => setDialog({ kind: "view", key: k })}>
+                        <IconInfo />
+                      </button>
+                      <button class="icon-btn" title="Edit" onClick={() => setDialog({ kind: "edit", key: k })}>
+                        <IconPencil />
+                      </button>
                       <Show when={k.actions.includes("search") || k.actions.includes("*")}>
-                        <button class="link small" onClick={() => setDialog({ kind: "token", key: k })}>
-                          tenant token
-                        </button>{" "}
+                        <button class="icon-btn" title="Generate a tenant token" onClick={() => setDialog({ kind: "token", key: k })}>
+                          <IconTicket />
+                        </button>
                       </Show>
-                      <button class="link small err" onClick={() => setDialog({ kind: "delete", key: k })}>
-                        delete
+                      <button class="icon-btn danger" title="Delete" onClick={() => setDialog({ kind: "delete", key: k })}>
+                        <IconTrash />
                       </button>
                     </td>
                   </tr>

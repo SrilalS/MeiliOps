@@ -22,10 +22,15 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/src/state/instances.ts` | Local instance manager: binary install, start/stop, launch flags |
 | `app/src/lib/sse.ts` | Fetch-based SSE reader (EventSource can't send auth headers) |
 | `app/src/lib/schema.ts` | Schema analysis of a document sample (Schema tab) |
+| `app/src/styles.css` | Design tokens at the top (Meilisearch palette, light + dark on `html[data-theme]`), then components |
+| `app/src/state/theme.ts` | System / light / dark theme; `index.html` applies it before first paint |
+| `app/src/components/icons.ts` | Icon registry (Lucide, per-icon imports). Use icons from here, never Unicode glyphs |
+| `app/src/views/TitleBar.tsx` | Custom title bar: connection switcher, breadcrumb, theme menu, window controls |
 | `app/src/views/` | Screens. `views/index/settingsCatalog.ts` lists every settings sub-route |
 | `app/scripts/coverage.mjs` | API coverage report (`npm run coverage`, `--strict` for CI) |
 | `app/scripts/measure-memory.ps1` | Memory of the whole process tree |
-| `.github/workflows/ci.yml` | Typecheck, `coverage --strict`, web build; app builds on Windows (NSIS artifact), macOS, Linux |
+| `.github/workflows/ci.yml` | Push/PR: typecheck + `coverage --strict` only (no app builds) |
+| `.github/workflows/release.yml` | Tag `v*`: checks, draft release, builds (Windows NSIS, macOS arm64 + x64 DMG, Linux deb/rpm/AppImage), then publishes |
 
 ## ⚠️ Gotchas (learned the hard way)
 
@@ -36,6 +41,8 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - **`additionalBrowserArgs` in `tauri.conf.json` overrides `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`.** To debug a build over CDP, merge `--remote-debugging-port=9333` in via the `TAURI_CONFIG` env var at build time.
 - Something on this machine already listens on **7700**. The dev server uses **7711**, and local instances check ports before starting.
 - **Sync `#[tauri::command]`s run on the main thread.** Anything that calls `with_webview` and waits for it must be `async`, or it deadlocks (see `memory.rs`).
+- **The window has no native frame on Windows/Linux** (`decorations: false`); `TitleBar.tsx` draws the controls. macOS keeps native traffic lights via `tauri.macos.conf.json` (arrays in platform configs replace, so that file repeats the whole window). Empty title-bar areas need `data-tauri-drag-region`.
+- **UI consistency:** use the tokens (`--bg*`, `--fg*`, `--accent*`, `--control-h`), never raw colors in components. Buttons, inputs and selects share `--control-h`; icon-only buttons are `.icon-btn` (24px) or `button.square` (control height).
 - Some experimental features are **launch flags** (logs route, metrics, task streaming); others are runtime toggles (`/experimental-features`). `ApiError` points users to the right one.
 
 ## 🔁 Updating to a new Meilisearch release
@@ -44,6 +51,12 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 2. `npx openapi-typescript@7 spec/meilisearch-openapi.json -o src/api/schema.d.ts && npm run gen`
 3. `npm run typecheck`: renamed or removed routes fail here
 4. `npm run coverage -- --strict`: new stable operations without a screen fail here
+
+## 🚀 Releasing
+
+1. Bump the version in `app/package.json`, `app/src-tauri/Cargo.toml` and `app/src-tauri/tauri.conf.json` (the release fails if the tag doesn't match all three)
+2. Commit, then `git tag v0.3.0 && git push origin v0.3.0`
+3. The release is published only when every platform builds. Tags like `v0.3.0-beta.1` become pre-releases
 
 ## ▶️ Dev loop
 
