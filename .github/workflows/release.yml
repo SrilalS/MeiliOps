@@ -97,11 +97,11 @@ jobs:
           - name: macOS Apple Silicon
             os: macos-latest
             rust-target: aarch64-apple-darwin
-            args: --target aarch64-apple-darwin --bundles dmg
+            args: --target aarch64-apple-darwin --bundles app,dmg
           - name: macOS Intel
             os: macos-latest
             rust-target: x86_64-apple-darwin
-            args: --target x86_64-apple-darwin --bundles dmg
+            args: --target x86_64-apple-darwin --bundles app,dmg
           - name: Linux x64
             os: ubuntu-22.04
             args: --bundles deb,rpm,appimage

@@ -136,6 +136,7 @@ pub fn meili_kill(children: State<'_, Children>, pid: u32) -> Result<(), String>
     }
 }
 
+#[cfg(windows)]
 fn log_warn(msg: &str) {
     eprintln!("[process] {msg}");
 }
