@@ -1,6 +1,6 @@
 import { ErrorBoundary, For, JSX, ParentProps, Show, createEffect, createSignal, on, onCleanup, onMount } from "solid-js";
 import { Portal } from "solid-js/web";
-import { dismissToast, online, setView, toasts } from "../state/app";
+import { dismissToast, notifyError, online, setView, toasts } from "../state/app";
 import { MeiliError, errorMessage, isNetworkError } from "../api/meili";
 import { IconX } from "./icons";
 
@@ -48,6 +48,9 @@ export function Confirm(props: { title: string; message: JSX.Element; confirmTex
               try {
                 await props.onConfirm();
                 props.onClose();
+              } catch (e) {
+                // Keep the dialog open so the user can read the error and retry.
+                notifyError(e, `${props.title} failed`);
               } finally {
                 setBusy(false);
               }

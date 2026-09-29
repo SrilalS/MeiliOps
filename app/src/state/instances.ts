@@ -125,7 +125,17 @@ const files = {
   remove: (path: string) => invoke<void>("app_remove", { path }),
   replace: (from: string, to: string) => invoke<void>("app_replace_file", { from, to }),
   sha256: (path: string) => invoke<string>("app_sha256", { path }),
+  list: (path: string) => invoke<string[]>("app_list_dir", { path }),
 };
+
+/** Windows reports open files as "os error 32"; say what that means here. */
+function explainRemoveError(e: unknown, what: string): Error {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/os error (32|5)\b|being used by another process|Access is denied/i.test(msg)) {
+    return new Error(`Couldn't delete ${what}: a Meilisearch process is still using it. It may be left over from an earlier MeiliOps session; end meilisearch in Task Manager (or restart the computer), then try again.`);
+  }
+  return new Error(`Couldn't delete ${what}: ${msg}`);
+}
 
 // ---------- paths & platform ----------
 
@@ -294,20 +304,70 @@ export async function saveInstance(inst: Instance, key?: string) {
 export async function deleteInstance(id: string, deleteData: boolean) {
   const inst = s.instances.find((x) => x.id === id);
   if (children.has(id)) await stopInstance(id);
-  await secrets.delete(`instance:${id}`);
+  // Data first: if it can't be removed, the instance stays so the user can retry.
   if (deleteData) {
-    await files.remove(await (await paths()).instanceDir(id));
-    // Data may also sit in a volume of each engine the instance ever ran on.
+    await removeInstanceData(id);
     for (const e of ["docker", "podman"] as const) {
-      if (inst?.dataVersion?.[e] && s.engines[e]?.running) {
-        await engineRun(e, ["volume", "rm", "-f", volumeName(id)]).catch((err) => notifyError(err, `Removing the ${engineLabel(e)} volume`));
-      }
+      // Data may also sit in a volume of each engine the instance ever ran on.
+      if (inst?.dataVersion?.[e] && s.engines[e]?.running) await removeVolume(e, volumeName(id));
     }
   }
+  await secrets.delete(`instance:${id}`);
   // Stay on the Local instances page even if it was the active connection.
   if (inst?.connectionId) await deleteConnection(inst.connectionId, { navigate: false });
   s.setInstances((list) => list.filter((x) => x.id !== id));
   await persist();
+}
+
+async function removeInstanceData(id: string) {
+  try {
+    await files.remove(await (await paths()).instanceDir(id));
+  } catch (e) {
+    throw explainRemoveError(e, "the data folder");
+  }
+}
+
+async function removeVolume(engine: "docker" | "podman", name: string) {
+  try {
+    await engineRun(engine, ["volume", "rm", "-f", name]);
+  } catch (e) {
+    throw new Error(`Couldn't delete the ${engineLabel(engine)} volume ${name}: ${e instanceof Error ? e.message : e}`);
+  }
+}
+
+// ---------- leftover data ----------
+
+export interface Leftover {
+  /** "native" = folder under instances/, else a volume of that engine. */
+  engine: Engine;
+  /** Folder or volume name. */
+  name: string;
+}
+
+/** Data folders and volumes that no instance owns (deleted with "keep data", or older sessions). */
+export async function findLeftovers(): Promise<Leftover[]> {
+  if (!isTauri) return [];
+  const ids = new Set(s.instances.map((i) => i.id));
+  const p = await paths();
+  const out: Leftover[] = (await files.list(await p.join(p.root, "instances"))).filter((d) => !ids.has(d)).map((name) => ({ engine: "native", name }));
+  for (const e of ["docker", "podman"] as const) {
+    if (!s.engines[e]?.running) continue;
+    const vols = (await engineRun(e, ["volume", "ls", "--filter", "name=meiliops-", "--format", "{{.Name}}"]).catch(() => ""))
+      .split(/\s+/)
+      .filter((v) => v.startsWith("meiliops-") && !ids.has(v.slice("meiliops-".length)));
+    out.push(...vols.map((name) => ({ engine: e as Engine, name })));
+  }
+  return out;
+}
+
+export async function removeLeftover(l: Leftover) {
+  if (l.engine === "native") {
+    try {
+      await files.remove(await (await paths()).instanceDir(l.name));
+    } catch (e) {
+      throw explainRemoveError(e, "the folder");
+    }
+  } else await removeVolume(l.engine, l.name);
 }
 
 export function newInstanceTemplate(): Instance {

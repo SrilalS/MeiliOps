@@ -76,3 +76,10 @@ pub async fn app_sha256<R: Runtime>(app: AppHandle<R>, path: String) -> Result<S
     .await
     .map_err(|e| e.to_string())?
 }
+
+/// Names of the entries in a directory (empty if it doesn't exist).
+#[tauri::command]
+pub fn app_list_dir<R: Runtime>(app: AppHandle<R>, path: String) -> Result<Vec<String>, String> {
+    let Ok(dir) = fs::read_dir(checked(&app, &path)?) else { return Ok(vec![]) };
+    Ok(dir.flatten().filter_map(|e| e.file_name().into_string().ok()).collect())
+}

@@ -63,7 +63,9 @@ Edit a stopped instance and pick another version:
 - **Logs** shows the process output live.
 - **Stop** shuts it down (`docker stop` / `podman stop` for containers). Closing MeiliOps stops all running instances so no process is left holding a port or the database lock.
 - If MeiliOps quits without stopping a container, it reattaches to it on the next launch.
-- **Delete** removes the instance and its connection, and optionally its data folder and volumes.
+- **Delete** removes the instance and its connection, and optionally its data folder and volumes. If the data can't be deleted (usually because a Meilisearch process still has it open), the instance is kept and the error says why.
+- **Leftover data** lists data folders and volumes that no instance owns, for example after deleting an instance without its data. Delete them from there.
+- On Windows, instances always stop when MeiliOps exits, even if it crashes or is ended from Task Manager.
 
 ::: tip Experimental routes
 Some experimental features are **launch flags** rather than runtime toggles: `--experimental-enable-metrics`, `--experimental-enable-logs-route` and `--experimental-enable-tasks-streaming-route`. Turn them on in the instance's launch flags to use the Metrics and Logs screens and live task streaming.

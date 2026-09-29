@@ -6,6 +6,11 @@
 // listed up front. These commands only ever run a binary from that layout (the version is
 // validated, the path is built here) and reuse the shell plugin's Rust `Command`, which
 // hides the console window on Windows. Docker and Podman still go through the JS API.
+//
+// On Windows every started instance joins a job object that kills it when MeiliOps exits for
+// any reason (crash, Task Manager, the updater's installer, a `tauri dev` reload). Without it,
+// an orphaned meilisearch.exe keeps its port and holds the data folder open, so the folder
+// can't be deleted.
 
 use std::{collections::HashMap, path::PathBuf, sync::Mutex};
 use tauri::{ipc::Channel, AppHandle, Manager, Runtime, State};
@@ -98,6 +103,10 @@ pub fn meili_spawn<R: Runtime>(
         .spawn()
         .map_err(|e| e.to_string())?;
     let pid = child.pid();
+    #[cfg(windows)]
+    if let Err(e) = kill_on_exit::assign(pid) {
+        log_warn(&format!("pid {pid} not tied to the app's lifetime: {e}"));
+    }
     children.0.lock().unwrap().insert(pid, child);
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
@@ -124,5 +133,58 @@ pub fn meili_kill(children: State<'_, Children>, pid: u32) -> Result<(), String>
     match children.0.lock().unwrap().remove(&pid) {
         Some(child) => child.kill().map_err(|e| e.to_string()),
         None => Ok(()),
+    }
+}
+
+fn log_warn(msg: &str) {
+    eprintln!("[process] {msg}");
+}
+
+#[cfg(windows)]
+mod kill_on_exit {
+    use std::sync::OnceLock;
+    use windows::Win32::{
+        Foundation::{CloseHandle, HANDLE},
+        System::{
+            JobObjects::{
+                AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation, SetInformationJobObject,
+                JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+            },
+            Threading::{OpenProcess, PROCESS_SET_QUOTA, PROCESS_TERMINATE},
+        },
+    };
+
+    /// The job handle is never closed: the OS closes it when MeiliOps exits, which kills the job.
+    struct Job(HANDLE);
+    unsafe impl Send for Job {}
+    unsafe impl Sync for Job {}
+
+    fn job() -> Result<&'static Job, String> {
+        static JOB: OnceLock<Result<Job, String>> = OnceLock::new();
+        JOB.get_or_init(|| unsafe {
+            let h = CreateJobObjectW(None, None).map_err(|e| e.to_string())?;
+            let mut info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+            info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+            SetInformationJobObject(
+                h,
+                JobObjectExtendedLimitInformation,
+                &info as *const _ as *const _,
+                std::mem::size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+            )
+            .map_err(|e| e.to_string())?;
+            Ok(Job(h))
+        })
+        .as_ref()
+        .map_err(Clone::clone)
+    }
+
+    pub fn assign(pid: u32) -> Result<(), String> {
+        let job = job()?;
+        unsafe {
+            let process = OpenProcess(PROCESS_SET_QUOTA | PROCESS_TERMINATE, false, pid).map_err(|e| e.to_string())?;
+            let res = AssignProcessToJobObject(job.0, process).map_err(|e| e.to_string());
+            let _ = CloseHandle(process);
+            res
+        }
     }
 }

@@ -57,6 +57,7 @@ pub fn run() {
             files::app_remove,
             files::app_replace_file,
             files::app_sha256,
+            files::app_list_dir,
             memory::webview_memory_low,
             process::meili_versions,
             process::meili_output,

@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal, onMount } from "solid-js";
+import { For, Show, createMemo, createResource, createSignal, onMount } from "solid-js";
 import { isTauri } from "../../lib/platform";
 import { connect } from "../../state/app";
 import { Confirm, Empty, StatusPill, formatBytes } from "../../components/ui";
@@ -18,7 +18,10 @@ import {
   isLive,
   listReleases,
   newInstanceTemplate,
+  Leftover,
+  findLeftovers,
   refreshEngines,
+  removeLeftover,
   refreshVersions,
   removeImage,
   removeVersion,
@@ -175,7 +178,9 @@ export default function InstancesView() {
         </tbody>
       </table>
 
-      <Show when={logsFor()}>
+      <LeftoverData />
+
+      <Show when={instances.some((i) => i.id === logsFor()) && logsFor()}>
         {(id) => (
           <div class="log-panel">
             <div class="side-head">
@@ -363,6 +368,55 @@ function EnginesCard() {
       {row("podman", engines.podman)}
       <div class="muted small">Runs the official getmeili/meilisearch image. Data lives in a named volume per instance.</div>
     </div>
+  );
+}
+
+/**
+ * Data folders and volumes no instance owns: instances deleted with "keep data", or data an
+ * orphaned process kept locked. Re-scanned whenever the instance list or the engines change.
+ */
+function LeftoverData() {
+  const [leftovers, { refetch }] = createResource(
+    () => [instances.length, engines.docker?.running, engines.podman?.running] as const,
+    () => findLeftovers().catch(() => [] as Leftover[]),
+  );
+  const [removing, setRemoving] = createSignal<Leftover>();
+  const label = (l: Leftover) => (l.engine === "native" ? "Data folder" : `${engineLabel(l.engine)} volume`);
+  return (
+    <Show when={leftovers()?.length}>
+      <div class="card leftovers">
+        <div class="row">
+          <b class="grow">Leftover data</b>
+          <span class="muted small">Not used by any instance: kept when an instance was deleted without its data.</span>
+        </div>
+        <For each={leftovers()}>
+          {(l) => (
+            <div class="version-row">
+              <span class="small">{label(l)}</span>
+              <span class="mono small grow ellipsis">{l.name}</span>
+              <button class="icon-btn" title="Delete" onClick={() => setRemoving(l)}>
+                <IconTrash />
+              </button>
+            </div>
+          )}
+        </For>
+      </div>
+      <Show when={removing()}>
+        <Confirm
+          title="Delete leftover data"
+          message={
+            <>
+              Permanently delete {label(removing()!).toLowerCase()} <code>{removing()!.name}</code>, with all its indexes, dumps and snapshots.
+            </>
+          }
+          onClose={() => setRemoving(undefined)}
+          onConfirm={async () => {
+            await removeLeftover(removing()!);
+            refetch();
+          }}
+        />
+      </Show>
+    </Show>
   );
 }
 

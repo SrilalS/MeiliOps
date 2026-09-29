@@ -2087,6 +2087,7 @@ dependencies = [
  "tauri-plugin-updater",
  "tauri-plugin-upload",
  "webview2-com",
+ "windows",
  "windows-core",
 ]
 

@@ -1970,3 +1970,9 @@ td.nowrap > button {
 .popover-icon.spin {
   animation: spin 0.9s linear infinite;
 }
+.leftovers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: none;
+}
