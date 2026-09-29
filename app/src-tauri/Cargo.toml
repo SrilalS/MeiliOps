@@ -1,6 +1,6 @@
 [package]
 name = "meiliops"
-version = "0.3.0"
+version = "0.4.0"
 description = "Native desktop admin app for Meilisearch"
 authors = ["MeiliOps contributors"]
 license = "MIT"
