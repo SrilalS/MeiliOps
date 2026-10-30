@@ -714,7 +714,7 @@ export interface paths {
         head?: never;
         /**
          * Update chat
-         * @description Updates the `chat` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `chat` setting for the index.
          */
         patch: operations["patchchat"];
         trace?: never;
@@ -733,7 +733,7 @@ export interface paths {
         get: operations["getdictionary"];
         /**
          * Update dictionary
-         * @description Updates the `dictionary` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `dictionary` setting for the index.
          */
         put: operations["putdictionary"];
         post?: never;
@@ -761,7 +761,7 @@ export interface paths {
         get: operations["getdisplayedAttributes"];
         /**
          * Update displayedAttributes
-         * @description Updates the `displayedAttributes` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `displayedAttributes` setting for the index.
          */
         put: operations["putdisplayedAttributes"];
         post?: never;
@@ -789,7 +789,7 @@ export interface paths {
         get: operations["getdistinctAttribute"];
         /**
          * Update distinctAttribute
-         * @description Updates the `distinctAttribute` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `distinctAttribute` setting for the index.
          */
         put: operations["putdistinctAttribute"];
         post?: never;
@@ -826,7 +826,7 @@ export interface paths {
         head?: never;
         /**
          * Update embedders
-         * @description Updates the `embedders` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `embedders` setting for the index.
          */
         patch: operations["patchembedders"];
         trace?: never;
@@ -845,7 +845,7 @@ export interface paths {
         get: operations["getfacetSearch"];
         /**
          * Update facetSearch
-         * @description Updates the `facetSearch` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `facetSearch` setting for the index.
          */
         put: operations["putfacetSearch"];
         post?: never;
@@ -882,7 +882,7 @@ export interface paths {
         head?: never;
         /**
          * Update faceting
-         * @description Updates the `faceting` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `faceting` setting for the index.
          */
         patch: operations["patchfaceting"];
         trace?: never;
@@ -901,7 +901,7 @@ export interface paths {
         get: operations["getfilterableAttributes"];
         /**
          * Update filterableAttributes
-         * @description Updates the `filterableAttributes` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `filterableAttributes` setting for the index.
          */
         put: operations["putfilterableAttributes"];
         post?: never;
@@ -929,7 +929,7 @@ export interface paths {
         get: operations["getforeignKeys"];
         /**
          * Update foreignKeys
-         * @description Updates the `foreignKeys` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `foreignKeys` setting for the index.
          */
         put: operations["putforeignKeys"];
         post?: never;
@@ -957,7 +957,7 @@ export interface paths {
         get: operations["getlocalizedAttributes"];
         /**
          * Update localizedAttributes
-         * @description Updates the `localizedAttributes` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `localizedAttributes` setting for the index.
          */
         put: operations["putlocalizedAttributes"];
         post?: never;
@@ -985,7 +985,7 @@ export interface paths {
         get: operations["getnonSeparatorTokens"];
         /**
          * Update nonSeparatorTokens
-         * @description Updates the `nonSeparatorTokens` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `nonSeparatorTokens` setting for the index.
          */
         put: operations["putnonSeparatorTokens"];
         post?: never;
@@ -1022,7 +1022,7 @@ export interface paths {
         head?: never;
         /**
          * Update pagination
-         * @description Updates the `pagination` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `pagination` setting for the index.
          */
         patch: operations["patchpagination"];
         trace?: never;
@@ -1041,7 +1041,7 @@ export interface paths {
         get: operations["getprefixSearch"];
         /**
          * Update prefixSearch
-         * @description Updates the `prefixSearch` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `prefixSearch` setting for the index.
          */
         put: operations["putprefixSearch"];
         post?: never;
@@ -1069,7 +1069,7 @@ export interface paths {
         get: operations["getproximityPrecision"];
         /**
          * Update proximityPrecision
-         * @description Updates the `proximityPrecision` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `proximityPrecision` setting for the index.
          */
         put: operations["putproximityPrecision"];
         post?: never;
@@ -1097,7 +1097,7 @@ export interface paths {
         get: operations["getrankingRules"];
         /**
          * Update rankingRules
-         * @description Updates the `rankingRules` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `rankingRules` setting for the index.
          */
         put: operations["putrankingRules"];
         post?: never;
@@ -1125,7 +1125,7 @@ export interface paths {
         get: operations["getsearchCutoffMs"];
         /**
          * Update searchCutoffMs
-         * @description Updates the `searchCutoffMs` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `searchCutoffMs` setting for the index.
          */
         put: operations["putsearchCutoffMs"];
         post?: never;
@@ -1153,7 +1153,7 @@ export interface paths {
         get: operations["getsearchableAttributes"];
         /**
          * Update searchableAttributes
-         * @description Updates the `searchableAttributes` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `searchableAttributes` setting for the index.
          */
         put: operations["putsearchableAttributes"];
         post?: never;
@@ -1181,7 +1181,7 @@ export interface paths {
         get: operations["getseparatorTokens"];
         /**
          * Update separatorTokens
-         * @description Updates the `separatorTokens` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `separatorTokens` setting for the index.
          */
         put: operations["putseparatorTokens"];
         post?: never;
@@ -1209,7 +1209,7 @@ export interface paths {
         get: operations["getsortableAttributes"];
         /**
          * Update sortableAttributes
-         * @description Updates the `sortableAttributes` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `sortableAttributes` setting for the index.
          */
         put: operations["putsortableAttributes"];
         post?: never;
@@ -1237,7 +1237,7 @@ export interface paths {
         get: operations["getstopWords"];
         /**
          * Update stopWords
-         * @description Updates the `stopWords` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `stopWords` setting for the index.
          */
         put: operations["putstopWords"];
         post?: never;
@@ -1265,7 +1265,7 @@ export interface paths {
         get: operations["getsynonyms"];
         /**
          * Update synonyms
-         * @description Updates the `synonyms` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `synonyms` setting for the index.
          */
         put: operations["putsynonyms"];
         post?: never;
@@ -1302,7 +1302,7 @@ export interface paths {
         head?: never;
         /**
          * Update typoTolerance
-         * @description Updates the `typoTolerance` setting for the index. Send the new value in the request body; send null to reset to default.
+         * @description Updates the `typoTolerance` setting for the index.
          */
         patch: operations["patchtypoTolerance"];
         trace?: never;
@@ -1479,8 +1479,8 @@ export interface paths {
         put?: never;
         /**
          * Model context protocol (MCP)
-         * @description The `/mcp` route exposes [the MCP open protocol](https://modelcontextprotocol.io) that enables seamless integration between LLM
-         *     applications and external data sources and tools.
+         * @description The `/mcp` route exposes an [MCP server](https://www.meilisearch.com/docs/getting_started/integrations/mcp) for
+         *     LLM applications to search Meilisearch.
          */
         post: operations["mcp"];
         delete?: never;
@@ -2168,7 +2168,7 @@ export interface components {
          */
         ChatCompletionAudioVoice: "alloy" | "ash" | "ballad" | "coral" | "echo" | "sage" | "shimmer" | "verse";
         /** @description Deprecated in favor of `tool_choice`. Controls which (if any) function is called by the model. */
-        ChatCompletionFunctionCall: "none" | "auto" | {
+        ChatCompletionFunctionCall: ("none" | "auto") | {
             /** @description Forces the model to call the specified function. */
             Function: {
                 name: string;
@@ -2405,7 +2405,7 @@ export interface components {
          *
          *     `none` is the default when no tools are present. `auto` is the default if tools are present.present.
          */
-        ChatCompletionToolChoiceOption: "none" | "auto" | "required" | {
+        ChatCompletionToolChoiceOption: ("none" | "auto" | "required") | {
             named: components["schemas"]["ChatCompletionNamedToolChoice"];
         };
         /**
@@ -2589,6 +2589,19 @@ export interface components {
             stats: {
                 [key: string]: components["schemas"]["FacetStats"];
             };
+        };
+        /** @description Outcome of applying conditions to a query. */
+        ConditionOutcomes: {
+            /** @description Whether the rule was active */
+            satisfiesActiveCondition: boolean;
+            /** @description Whether the current time falls in the range of time specified by the condition */
+            satisfiesTimeCondition?: components["schemas"]["TimeConditionOutcome"];
+            /** @description Whether the query emptiness condition aligns with the actual query */
+            satisfiesQueryEmptyCondition?: components["schemas"]["QueryEmptyConditionOutcome"];
+            /** @description Whether the query words meet the condition */
+            satisfiesQueryWordsCondition?: components["schemas"]["QueryWordsConditionOutcome"];
+            /** @description Whether the filter meets the condition */
+            satisfiesFilterCondition?: components["schemas"]["FilterConditionOutcome"];
         };
         Conditions: {
             time?: null | components["schemas"]["TimeCondition"];
@@ -3372,7 +3385,7 @@ export interface components {
             count: number;
         };
         /** @enum {string} */
-        FacetValuesSort: "alpha" | "count";
+        FacetValuesSort: "alpha" | "count" | "sampledCount";
         /** @description Faceting: maximum number of facet values and how they are sorted. */
         FacetingSettings: {
             /**
@@ -3419,6 +3432,7 @@ export interface components {
         FederatedSearchResult: components["schemas"]["HitsInfo"] & {
             /** @description Combined search results from all queries */
             hits: components["schemas"]["SearchHit"][];
+            /** @description List of vectors per query, if `retrieveVectors` is set to `true` */
             queryVectors?: {
                 [key: string]: components["schemas"]["Vec"];
             } | null;
@@ -3532,6 +3546,28 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** @description Outcome of the filter condition */
+        FilterConditionOutcome: ("satisfied" | "noConstraint") | {
+            /** @description At least one field from the condition is missing from the filter */
+            missingConstraintOnField: {
+                /** @description Missing field in filter */
+                field: string;
+            };
+        } | {
+            /** @description At least one field has a condition not met in the filter */
+            unmetConstraintOnField: {
+                /** @description Field with unmet constraint in filter */
+                field: string;
+            };
+        } | {
+            /** @description The filter does not constraint enough field to satisfy the condition */
+            notEnoughFields: {
+                /** @description Number of fields in the filter */
+                fieldCountInFilter: number;
+                /** @description Number of fields in the condition */
+                fieldCountInCondition: number;
+            };
+        };
         /**
          * @description Controls which filter operators are allowed for an attribute. This
          *     provides fine-grained control over filtering capabilities.
@@ -3588,7 +3624,15 @@ export interface components {
              */
             features?: components["schemas"]["FilterableAttributesFeatures"];
         };
-        FilterableAttributesRule: string | components["schemas"]["FilterableAttributesPatterns"];
+        /**
+         * @description A rule declaring which attributes can be used for filtering and faceting.
+         *
+         *     A rule takes one of two forms. The object form lists attribute patterns
+         *     together with the filtering and faceting features they enable. The string
+         *     form names a single attribute and is a shorthand for an object matching that
+         *     attribute with the default features.
+         */
+        FilterableAttributesRule: components["schemas"]["FilterableAttributesPatterns"] | string;
         /**
          * @description The reason the model stopped generating tokens.
          * @enum {string}
@@ -3791,6 +3835,14 @@ export interface components {
             updatedAt: string;
             /** @description [Primary key](https://www.meilisearch.com/docs/learn/getting_started/primary_key) of the index */
             primaryKey?: string | null;
+        };
+        InlineDynamicSearchRule: {
+            uid: components["schemas"]["IndexUid"];
+            /** Format: u-int64 */
+            precedence?: number | null;
+            active?: boolean;
+            conditions?: components["schemas"]["Conditions"];
+            actions?: components["schemas"]["RuleActions"];
         };
         /** @description Input audio data for an audio content part. */
         InputAudio: {
@@ -4566,7 +4618,27 @@ export interface components {
              */
             words?: string | null;
         };
-        RankingRuleView: "words" | "typo" | "proximity" | "attribute" | "attributeRank" | "wordPosition" | "sort" | "exactness" | {
+        /**
+         * @description Outcome of the query empty condition
+         * @enum {string}
+         */
+        QueryEmptyConditionOutcome: "satisfied" | "noConstraint" | "queryNotEmpty" | "queryEmpty";
+        /** @description Outcome of the query words condition */
+        QueryWordsConditionOutcome: ("satisfied" | "noConstraint") | {
+            /** @description At least the specified word is missing in the query */
+            missingWord: {
+                /** @description Missing word in query */
+                word: string;
+            };
+        };
+        /**
+         * @description A single ranking rule.
+         *
+         *     Accepts one of the built-in rules (`words`, `typo`, `proximity`,
+         *     `attribute`, `attributeRank`, `wordPosition`, `sort`, `exactness`) or a sort
+         *     rule of the form `attribute:asc` or `attribute:desc`.
+         */
+        RankingRuleView: ("words" | "typo" | "proximity" | "attribute" | "attributeRank" | "wordPosition" | "sort" | "exactness") | {
             /** @description Sorted by the increasing value of the field specified. */
             asc: string;
         } | {
@@ -4871,6 +4943,7 @@ export interface components {
             primaryKey?: string | null;
             /** @description Remote that processed the query (federated search only). */
             remote?: string | null;
+            inlineRuleConditionOutcomes?: null | components["schemas"]["ConditionOutcomes"];
         };
         SearchQuery: {
             /**
@@ -5049,7 +5122,8 @@ export interface components {
             attributesToSearchOn?: string[] | null;
             /**
              * Format: double
-             * @description Exclude from the results any document whose [ranking score](https://www.meilisearch.com/docs/learn/relevancy/ranking_score) is below this value (between 0.0 and 1.0).
+             * @description Stop the search at the first document whose [ranking score](https://www.meilisearch.com/docs/learn/relevancy/ranking_score) is below this value (between 0.0 and 1.0).
+             *     All the documents after this document are excluded from the hits.
              *
              *     Excluded hits do not count toward `estimatedTotalHits`, `totalHits`, or facet distribution.
              *
@@ -5129,6 +5203,7 @@ export interface components {
             showRankingScoreDetails?: boolean;
             /** @description When true, the response includes a `performanceDetails` object with a timing breakdown of the query processing. */
             showPerformanceDetails?: boolean;
+            inlineRule?: null | components["schemas"]["InlineDynamicSearchRule"];
         };
         /** @description A `SearchQuery` + an index UID and optional FederationOptions. */
         SearchQueryWithIndex: {
@@ -5175,7 +5250,12 @@ export interface components {
             attributesToSearchOn?: string[] | null;
             /**
              * Format: double
-             * @description Exclude results below the specified ranking score
+             * @description Stop the search at the first document whose [ranking score](https://www.meilisearch.com/docs/learn/relevancy/ranking_score) is below this value (between 0.0 and 1.0).
+             *     All the documents after this document are excluded from the hits.
+             *
+             *     Excluded hits do not count toward `estimatedTotalHits`, `totalHits`, or facet distribution.
+             *
+             *     When used together with `page` and `hitsPerPage`, this parameter may reduce performance because Meilisearch must score all matching documents.
              */
             rankingScoreThreshold?: number | null;
             /** @description Languages to use for query tokenization */
@@ -5212,6 +5292,7 @@ export interface components {
             /** @description Adds a detailed performance details field */
             showPerformanceDetails?: boolean | null;
             federationOptions?: null | components["schemas"]["FederationOptions"];
+            inlineRule?: null | components["schemas"]["InlineDynamicSearchRule"];
         };
         /** @description Search response containing matching documents and metadata. */
         SearchResult: components["schemas"]["HitsInfo"] & {
@@ -5476,8 +5557,20 @@ export interface components {
              * @description Attributes that can be used as [filters](https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results) and [facets](https://www.meilisearch.com/docs/learn/filtering_and_sorting/search_with_facet_filters). Strings or objects with `attributePatterns` and `features`.
              * @default []
              * @example [
-             *       "release_date",
-             *       "genre"
+             *       "genres",
+             *       "director",
+             *       {
+             *         "attributePatterns": [
+             *           "*_ratings"
+             *         ],
+             *         "features": {
+             *           "facetSearch": false,
+             *           "filter": {
+             *             "equality": true,
+             *             "comparison": true
+             *           }
+             *         }
+             *       }
              *     ]
              */
             filterableAttributes: components["schemas"]["FilterableAttributesRule"][] | null;
@@ -5688,8 +5781,20 @@ export interface components {
              * @description Attributes that can be used as [filters](https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results) and [facets](https://www.meilisearch.com/docs/learn/filtering_and_sorting/search_with_facet_filters). Strings or objects with `attributePatterns` and `features`.
              * @default []
              * @example [
-             *       "release_date",
-             *       "genre"
+             *       "genres",
+             *       "director",
+             *       {
+             *         "attributePatterns": [
+             *           "*_ratings"
+             *         ],
+             *         "features": {
+             *           "facetSearch": false,
+             *           "filter": {
+             *             "equality": true,
+             *             "comparison": true
+             *           }
+             *         }
+             *       }
              *     ]
              */
             filterableAttributes: components["schemas"]["FilterableAttributesRule"][] | null;
@@ -6264,6 +6369,11 @@ export interface components {
              */
             end?: string | null;
         };
+        /**
+         * @description Outcome of the time condition
+         * @enum {string}
+         */
+        TimeConditionOutcome: "satisfied" | "noConstraint" | "tooEarly" | "tooLate";
         /** @description A most likely token and its log probability at a given position. */
         TopLogprobs: {
             /** @description The token. */
@@ -9538,7 +9648,8 @@ export interface operations {
                  */
                 attributesToSearchOn?: string[];
                 /**
-                 * @description Exclude from the results any document whose [ranking score](https://www.meilisearch.com/docs/learn/relevancy/ranking_score) is below this value (between 0.0 and 1.0).
+                 * @description Stop the search at the first document whose [ranking score](https://www.meilisearch.com/docs/learn/relevancy/ranking_score) is below this value (between 0.0 and 1.0).
+                 *     All the documents after this document are excluded from the hits.
                  *
                  *     Excluded hits do not count toward `estimatedTotalHits`, `totalHits`, or facet distribution.
                  *
@@ -10243,8 +10354,15 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `chat` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example {
+                 *       "description": "A movie database",
+                 *       "documentTemplate": "{{doc.title}}"
+                 *     }
+                 */
                 "application/json": components["schemas"]["ChatSettings"];
             };
         };
@@ -10377,8 +10495,15 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `dictionary` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       "J. R. R.",
+                 *       "W. E. B."
+                 *     ]
+                 */
                 "application/json": string[];
             };
         };
@@ -10580,8 +10705,17 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `displayedAttributes` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       "title",
+                 *       "overview",
+                 *       "genres",
+                 *       "release_date"
+                 *     ]
+                 */
                 "application/json": string[];
             };
         };
@@ -10783,8 +10917,10 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `distinctAttribute` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /** @example movie_id */
                 "text/plain": string;
             };
         };
@@ -11057,8 +11193,19 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `embedders` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example {
+                 *       "default": {
+                 *         "source": "openAi",
+                 *         "apiKey": "OPENAI_API_KEY",
+                 *         "model": "text-embedding-3-small",
+                 *         "documentTemplate": "{{doc.title}}"
+                 *       }
+                 *     }
+                 */
                 "application/json": {
                     [key: string]: components["schemas"]["SettingEmbeddingSettings"];
                 };
@@ -11193,8 +11340,10 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `facetSearch` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /** @example true */
                 "text/plain": boolean;
             };
         };
@@ -11465,8 +11614,17 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `faceting` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example {
+                 *       "maxValuesPerFacet": 200,
+                 *       "sortFacetValuesBy": {
+                 *         "*": "alpha"
+                 *       }
+                 *     }
+                 */
                 "application/json": components["schemas"]["FacetingSettings"];
             };
         };
@@ -11599,8 +11757,27 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `filterableAttributes` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       "genres",
+                 *       "director",
+                 *       {
+                 *         "attributePatterns": [
+                 *           "*_ratings"
+                 *         ],
+                 *         "features": {
+                 *           "facetSearch": false,
+                 *           "filter": {
+                 *             "equality": true,
+                 *             "comparison": true
+                 *           }
+                 *         }
+                 *       }
+                 *     ]
+                 */
                 "application/json": components["schemas"]["FilterableAttributesRule"][];
             };
         };
@@ -11802,8 +11979,17 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `foreignKeys` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       {
+                 *         "foreignIndexUid": "directors",
+                 *         "fieldName": "director_id"
+                 *       }
+                 *     ]
+                 */
                 "application/json": components["schemas"]["ForeignKey"][];
             };
         };
@@ -12005,8 +12191,21 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `localizedAttributes` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       {
+                 *         "attributePatterns": [
+                 *           "*_ja"
+                 *         ],
+                 *         "locales": [
+                 *           "jpn"
+                 *         ]
+                 *       }
+                 *     ]
+                 */
                 "application/json": components["schemas"]["LocalizedAttributesRuleView"][];
             };
         };
@@ -12208,8 +12407,15 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `nonSeparatorTokens` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       "@",
+                 *       "#"
+                 *     ]
+                 */
                 "application/json": string[];
             };
         };
@@ -12480,8 +12686,14 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `pagination` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example {
+                 *       "maxTotalHits": 2000
+                 *     }
+                 */
                 "application/json": components["schemas"]["PaginationSettings"];
             };
         };
@@ -12614,8 +12826,10 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `prefixSearch` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /** @example indexingTime */
                 "application/json": components["schemas"]["PrefixSearchSettings"];
             };
         };
@@ -12817,8 +13031,10 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `proximityPrecision` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /** @example byAttribute */
                 "application/json": components["schemas"]["ProximityPrecisionView"];
             };
         };
@@ -13020,8 +13236,19 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `rankingRules` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       "words",
+                 *       "typo",
+                 *       "proximity",
+                 *       "attribute",
+                 *       "sort",
+                 *       "exactness"
+                 *     ]
+                 */
                 "application/json": components["schemas"]["RankingRuleView"][];
             };
         };
@@ -13223,8 +13450,10 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `searchCutoffMs` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /** @example 150 */
                 "text/plain": number;
             };
         };
@@ -13426,8 +13655,16 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `searchableAttributes` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       "title",
+                 *       "overview",
+                 *       "genres"
+                 *     ]
+                 */
                 "application/json": string[];
             };
         };
@@ -13629,8 +13866,15 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `separatorTokens` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       "|",
+                 *       "&"
+                 *     ]
+                 */
                 "application/json": string[];
             };
         };
@@ -13832,8 +14076,15 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `sortableAttributes` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       "release_date",
+                 *       "rating"
+                 *     ]
+                 */
                 "application/json": string[];
             };
         };
@@ -14035,8 +14286,16 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `stopWords` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example [
+                 *       "of",
+                 *       "the",
+                 *       "to"
+                 *     ]
+                 */
                 "application/json": string[];
             };
         };
@@ -14240,8 +14499,20 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `synonyms` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example {
+                 *       "wolverine": [
+                 *         "xmen",
+                 *         "logan"
+                 *       ],
+                 *       "logan": [
+                 *         "wolverine"
+                 *       ]
+                 *     }
+                 */
                 "application/json": {
                     [key: string]: string[];
                 };
@@ -14514,8 +14785,24 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description The new value for the `typoTolerance` setting. Send `null` to reset it to its default value. */
         requestBody: {
             content: {
+                /**
+                 * @example {
+                 *       "enabled": true,
+                 *       "minWordSizeForTypos": {
+                 *         "oneTypo": 5,
+                 *         "twoTypos": 9
+                 *       },
+                 *       "disableOnWords": [
+                 *         "Star"
+                 *       ],
+                 *       "disableOnAttributes": [
+                 *         "title"
+                 *       ]
+                 *     }
+                 */
                 "application/json": components["schemas"]["TypoSettings"];
             };
         };

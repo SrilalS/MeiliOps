@@ -2,7 +2,7 @@
 
 MeiliOps aims to cover **100% of Meilisearch's stable API** for the latest stable release. Coverage is measured, not estimated: `npm run coverage` scans the source for every API call and compares it with the operations in Meilisearch's published OpenAPI spec.
 
-**Meilisearch 1.54.1: 143 operations. 140 have a dedicated screen (97.9%); all 143 are reachable from the API console.**
+**Meilisearch 1.56.0: 143 operations. 140 have a dedicated screen (97.9%); all 143 are reachable from the API console.**
 
 | Area (OpenAPI tag) | Operations | Where in MeiliOps |
 |---|---|---|

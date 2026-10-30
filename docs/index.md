@@ -22,7 +22,7 @@ hero:
 features:
   - icon: 🧭
     title: The whole API, not a subset
-    details: Every stable Meilisearch operation has a screen (140 of 143 in v1.54; the other 3 are Enterprise-only and reachable from the API console).
+    details: Every stable Meilisearch operation has a screen (140 of 143 in v1.56; the other 3 are Enterprise-only and reachable from the API console).
   - icon: ⚡
     title: Native and lightweight
     details: Built on Tauri 2 and SolidJS. A 3 MB installer and about 145 MB of RAM at idle, most of which is the system WebView.
