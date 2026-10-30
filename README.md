@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://github.com/SrilalS/MeiliOps/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/SrilalS/MeiliOps?color=ff5cb2&label=download" /></a>
   <a href="https://github.com/SrilalS/MeiliOps/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/SrilalS/MeiliOps/actions/workflows/ci.yml/badge.svg" /></a>
-  <img alt="Meilisearch API coverage" src="https://img.shields.io/badge/Meilisearch%201.54%20API-100%25-5468ff" />
+  <img alt="Meilisearch API coverage" src="https://img.shields.io/badge/Meilisearch%201.56%20API-100%25-5468ff" />
   <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-f5a524" />
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-00c7b7" /></a>
 </p>
@@ -31,7 +31,7 @@
 
 Meilisearch ships a search preview, but no full admin tool. MeiliOps is that tool, in the spirit of MongoDB Compass and pgAdmin:
 
-- 🧭 **The whole API.** Every stable Meilisearch operation has a screen (140 of 143 in v1.54; the other 3 are Enterprise-only and reachable from the built-in API console). CI enforces it on every release.
+- 🧭 **The whole API.** Every stable Meilisearch operation has a screen (140 of 143 in v1.56; the other 3 are Enterprise-only and reachable from the built-in API console). CI enforces it on every release.
 - ⚡ **Native and lightweight.** Tauri 2 and SolidJS: a 3 MB installer and about 145 MB of RAM at idle, most of it the system WebView.
 - 🔐 **Keys stay in your keychain.** API keys go to Windows Credential Manager, macOS Keychain or the Secret Service, never to a config file.
 - 🕵️ **No telemetry.** MeiliOps talks to your servers and GitHub (update check, Meilisearch downloads), nothing else. [Every host it contacts](https://srilals.github.io/MeiliOps/reference/security#network-access).
@@ -81,7 +81,7 @@ From 0.4 on, MeiliOps updates itself: an **Update** button appears in the title 
 > [!NOTE]
 > Builds aren't code-signed yet. On Windows, choose **More info → Run anyway** in the SmartScreen prompt; on macOS, right-click the app and choose **Open** the first time. [More help](https://srilals.github.io/MeiliOps/guide/troubleshooting).
 
-MeiliOps supports the **latest stable Meilisearch** (currently 1.54).
+MeiliOps supports the **latest stable Meilisearch** (currently 1.56).
 
 ## Development
 
