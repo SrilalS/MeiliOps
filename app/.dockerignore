@@ -1,0 +1,7 @@
+node_modules
+dist
+dist-server
+src-tauri
+spec/history
+.vscode
+*.log

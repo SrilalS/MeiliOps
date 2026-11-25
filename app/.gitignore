@@ -1,4 +1,5 @@
 node_modules
 dist
+dist-server
 # Per-release OpenAPI specs downloaded by scripts/gen-since.mjs
 spec/history/

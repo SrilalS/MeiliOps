@@ -1,0 +1,157 @@
+# MeiliOps (hosted mode) for a Kubernetes cluster that already runs Meilisearch.
+#
+# - Each Meilisearch server is MEILIOPS_SERVER_<ID>_URL plus an optional _KEY, _NAME and _COLOR.
+# - Users sign in with your OpenID Connect provider (e.g. Microsoft Entra ID), handled by MeiliOps
+#   itself (MEILIOPS_AUTH_*), the same way Temporal UI's TEMPORAL_AUTH_* works.
+# - Keys and the client secret come from a Secret (or a Secrets Store CSI SecretProviderClass)
+#   and stay in the pod: the browser never sees them.
+# - It is served under /meiliops on an existing host; the route forwards the path as-is.
+#
+# Replace every REPLACE_* value, then: kubectl apply -f meiliops.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: meiliops-secrets
+  namespace: meiliops
+type: Opaque
+stringData:
+  # Every signed-in user acts with this key, so scope it to what MeiliOps users may do. Leave out
+  # the keys.* actions unless you set MEILIOPS_ALLOW_KEY_MANAGEMENT: the /keys routes reveal API
+  # keys in plain text.
+  meili-key: "REPLACE_WITH_MEILISEARCH_KEY"
+  # The OIDC app registration's client secret.
+  oidc-client-secret: "REPLACE_WITH_CLIENT_SECRET"
+  # 32+ random characters, e.g. `openssl rand -base64 48`. Rotating it signs everyone out.
+  session-secret: "REPLACE_WITH_SESSION_SECRET"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meiliops
+  namespace: meiliops
+  labels: { app.kubernetes.io/name: meiliops }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: meiliops }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: meiliops }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: meiliops
+          # Build from app/ (podman build -f Containerfile .) and push to your registry.
+          image: registry.example.com/meiliops-web:0.4.1
+          ports:
+            - { name: http, containerPort: 8080 }
+          env:
+            # --- Meilisearch servers ---
+            - { name: MEILIOPS_SERVER_PROD_URL, value: "http://meilisearch.search.svc.cluster.local:7700" }
+            - { name: MEILIOPS_SERVER_PROD_NAME, value: "Production" }
+            - name: MEILIOPS_SERVER_PROD_KEY
+              valueFrom: { secretKeyRef: { name: meiliops-secrets, key: meili-key } }
+
+            # --- Served under https://REPLACE_HOST/meiliops ---
+            - { name: MEILIOPS_PUBLIC_PATH, value: "/meiliops" }
+
+            # --- Sign-in (Microsoft Entra ID shown) ---
+            - { name: MEILIOPS_AUTH_ENABLED, value: "true" }
+            - { name: MEILIOPS_AUTH_ISSUER_URL, value: "https://login.microsoftonline.com/REPLACE_TENANT_ID/v2.0" }
+            - { name: MEILIOPS_AUTH_CLIENT_ID, value: "REPLACE_CLIENT_ID" }
+            - name: MEILIOPS_AUTH_CLIENT_SECRET
+              valueFrom: { secretKeyRef: { name: meiliops-secrets, key: oidc-client-secret } }
+            - { name: MEILIOPS_AUTH_CALLBACK_URL, value: "https://REPLACE_HOST/meiliops/auth/callback" }
+            # Group object IDs (or app role values) allowed to sign in. Needs the app registration
+            # to emit the groups claim, ideally only "groups assigned to the application".
+            - { name: MEILIOPS_AUTH_ALLOWED_GROUPS, value: "REPLACE_ADMIN_GROUP_ID" }
+            - name: MEILIOPS_SESSION_SECRET
+              valueFrom: { secretKeyRef: { name: meiliops-secrets, key: session-secret } }
+
+            # "all" also logs searches and document reads, with the user.
+            - { name: MEILIOPS_AUDIT, value: "all" }
+            # Off by default: the API keys screen shows keys in plain text, which lets a user
+            # keep access after losing theirs. Turn on only if users may manage keys anyway.
+            # - { name: MEILIOPS_ALLOW_KEY_MANAGEMENT, value: "true" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meiliops
+  namespace: meiliops
+spec:
+  selector: { app.kubernetes.io/name: meiliops }
+  ports:
+    - { name: http, port: 8080, targetPort: http }
+---
+# Gateway API route on an existing Gateway and host. The path is forwarded as-is (no rewrite):
+# MeiliOps knows it lives under MEILIOPS_PUBLIC_PATH. With ingress-nginx instead, route
+# /meiliops to the Service the same way, without rewrite-target.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: meiliops
+  namespace: meiliops
+spec:
+  parentRefs:
+    - { name: REPLACE_GATEWAY_NAME, namespace: REPLACE_GATEWAY_NAMESPACE, sectionName: https }
+  hostnames: ["REPLACE_HOST"]
+  rules:
+    - matches:
+        - path: { type: PathPrefix, value: /meiliops }
+      backendRefs:
+        - { name: meiliops, port: 8080 }
+---
+# In: only the Gateway's proxy pods. Out: DNS, Meilisearch, and HTTPS to the identity provider.
+# Meilisearch's own NetworkPolicy must also admit this pod (label app.kubernetes.io/name: meiliops).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: meiliops
+  namespace: meiliops
+spec:
+  podSelector:
+    matchLabels: { app.kubernetes.io/name: meiliops }
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: REPLACE_GATEWAY_NAMESPACE }
+      ports:
+        - { port: 8080 }
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+          podSelector:
+            matchLabels: { k8s-app: kube-dns }
+      ports:
+        - { port: 53, protocol: UDP }
+        - { port: 53, protocol: TCP }
+    - to:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: search }
+      ports:
+        - { port: 7700 }
+    # The identity provider (discovery, token and signing-key endpoints). Public internet only.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+      ports:
+        - { port: 443 }

@@ -2,6 +2,7 @@ import { For, Show, createSignal, onCleanup } from "solid-js";
 import { api, notify, notifyError } from "../state/app";
 import { errorMessage } from "../api/meili";
 import { downloadText, isTauri } from "../lib/platform";
+import { hosted } from "../lib/hosted";
 
 const MAX_LINES = 5000;
 
@@ -86,7 +87,8 @@ export default function LogsView() {
       <div class="page-head">
         <h2>Logs</h2>
         <span class="muted small">Requires launching Meilisearch with --experimental-enable-logs-route.</span>
-        <Show when={!isTauri}>
+        {/* Hosted mode: the MeiliOps server asks Meilisearch for an uncompressed stream. */}
+        <Show when={!isTauri && !hosted}>
           <span class="warn small">In a plain browser the stream is held back by server-side compression. Use the desktop app.</span>
         </Show>
       </div>

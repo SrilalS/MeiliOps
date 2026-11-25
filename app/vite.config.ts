@@ -5,8 +5,12 @@ import process from "node:process";
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
-export default defineConfig(() => ({
+export default defineConfig(({ mode }) => ({
   plugins: [solid()],
+
+  // Hosted mode (`npm run build:web`): served by app/server, which reads its web build from
+  // dist-server/public. Relative asset URLs keep it working under a sub-path the ingress strips.
+  ...(mode === "hosted" ? { base: "./", build: { outDir: "dist-server/public", emptyOutDir: true } } : {}),
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

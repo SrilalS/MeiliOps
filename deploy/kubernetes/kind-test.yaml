@@ -1,0 +1,139 @@
+# Local test setup for kind: two Meilisearch servers (latest and the oldest
+# supported version) and MeiliOps pointed at both. No SSO: port-forward the
+# Service to try it. See docs/development/hosted.md.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: meiliops-test
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: meili-keys
+  namespace: meiliops-test
+type: Opaque
+stringData:
+  latest: "test-master-key-latest-0123456789"
+  oldest: "test-master-key-oldest-0123456789"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meili-latest
+  namespace: meiliops-test
+spec:
+  selector:
+    matchLabels: { app: meili-latest }
+  template:
+    metadata:
+      labels: { app: meili-latest }
+    spec:
+      containers:
+        - name: meilisearch
+          image: docker.io/getmeili/meilisearch:v1.58.0
+          args: ["meilisearch", "--experimental-enable-logs-route", "--experimental-enable-metrics"]
+          env:
+            - { name: MEILI_NO_ANALYTICS, value: "true" }
+            - name: MEILI_MASTER_KEY
+              valueFrom: { secretKeyRef: { name: meili-keys, key: latest } }
+          ports:
+            - { containerPort: 7700 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meili-latest
+  namespace: meiliops-test
+spec:
+  selector: { app: meili-latest }
+  ports:
+    - { port: 7700 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meili-oldest
+  namespace: meiliops-test
+spec:
+  selector:
+    matchLabels: { app: meili-oldest }
+  template:
+    metadata:
+      labels: { app: meili-oldest }
+    spec:
+      containers:
+        - name: meilisearch
+          image: docker.io/getmeili/meilisearch:v1.18.0
+          env:
+            - { name: MEILI_NO_ANALYTICS, value: "true" }
+            - name: MEILI_MASTER_KEY
+              valueFrom: { secretKeyRef: { name: meili-keys, key: oldest } }
+          ports:
+            - { containerPort: 7700 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meili-oldest
+  namespace: meiliops-test
+spec:
+  selector: { app: meili-oldest }
+  ports:
+    - { port: 7700 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meiliops
+  namespace: meiliops-test
+spec:
+  selector:
+    matchLabels: { app: meiliops }
+  template:
+    metadata:
+      labels: { app: meiliops }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: meiliops
+          image: localhost/meiliops-web:dev
+          imagePullPolicy: Never
+          ports:
+            - { name: http, containerPort: 8080 }
+          env:
+            - { name: MEILIOPS_SERVERS, value: "latest,oldest" }
+            - { name: MEILIOPS_SERVER_LATEST_URL, value: "http://meili-latest:7700" }
+            - { name: MEILIOPS_SERVER_LATEST_NAME, value: "Meilisearch 1.58" }
+            - name: MEILIOPS_SERVER_LATEST_KEY
+              valueFrom: { secretKeyRef: { name: meili-keys, key: latest } }
+            - { name: MEILIOPS_SERVER_OLDEST_URL, value: "http://meili-oldest:7700" }
+            - { name: MEILIOPS_SERVER_OLDEST_NAME, value: "Meilisearch 1.18" }
+            - name: MEILIOPS_SERVER_OLDEST_KEY
+              valueFrom: { secretKeyRef: { name: meili-keys, key: oldest } }
+            # Served under /meiliops, as behind a shared Gateway. Sign-in is off here: kind has no
+            # identity provider. docs/guide/hosted.md shows how to test it with a mock provider.
+            - { name: MEILIOPS_PUBLIC_PATH, value: "/meiliops" }
+            - { name: MEILIOPS_AUDIT, value: "all" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meiliops
+  namespace: meiliops-test
+spec:
+  selector: { app: meiliops }
+  ports:
+    - { name: http, port: 8080, targetPort: http }

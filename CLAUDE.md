@@ -9,7 +9,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 2. **No Electron.** Tauri 2 + TypeScript (SolidJS). Memory: see `Research/08-performance-results.md`.
 3. Windows 11 x64 first; macOS and Linux must keep building.
 4. **The team writes TypeScript only.** Native code is limited to `app/src-tauri/src/lib.rs` (keychain), `files.rs` (sandboxed file ops), `memory.rs` (WebView2 memory target, not exposed by Tauri) and `process.rs` (runs side-by-side Meilisearch versions; the shell scope can't allow a per-version path). Prefer Tauri plugins; add Rust only when a plugin is broken or missing, and document why.
-5. API keys live in the OS credential store, never in plain-text config.
+5. API keys live in the OS credential store, never in plain-text config. **Hosted mode** (web build in a container) is the one exception: keys come from the pod's environment (a Kubernetes Secret) and must never reach the browser.
 
 ## 🗺️ Layout
 
@@ -19,6 +19,10 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/src/api/schema.d.ts` | Generated from `app/spec/meilisearch-openapi.json` (don't edit) |
 | `app/src/api/operations.json` | Generated op catalog for the API console (`npm run gen`) |
 | `app/src/api/since.json` | Generated (`npm run gen` → `scripts/gen-since.mjs`): operations newer than the minimum supported Meilisearch (1.18) and the version that added each |
+| `app/server/` | Hosted mode server (Node, no dependencies): serves the web build, proxies `/api/servers/<id>/*` to Meilisearch adding the key from env, built-in OIDC sign-in (`auth.ts`, like Temporal UI's `TEMPORAL_AUTH_*`), `MEILIOPS_PUBLIC_PATH`, audit log. `npm run build:web` builds it with the app into `dist-server/` |
+| `app/scripts/mock-oidc.mjs`, `test-hosted-auth.mjs` | Test-only OIDC provider and the end-to-end sign-in checks (27) against it. Setup in `docs/guide/hosted.md` |
+| `app/src/lib/hosted.ts` | `hosted` flag (`vite build --mode hosted`), loads the server list from `/api/config` |
+| `app/Containerfile`, `deploy/kubernetes/` | Hosted image (~80 MB) and manifests; `kind-test.yaml` runs MeiliOps with Meilisearch 1.58 and 1.18 |
 | `app/src/lib/compat.ts` | Version gating: `supports`/`needs`/`settingMissing`, `MIN_VERSION`; `components/Requires.tsx` gates a whole screen |
 | `app/src/state/app.ts` | Connections, active client, task tracking (`trackTask`), toasts |
 | `app/src/state/instances.ts` | Local instance manager: side-by-side native versions (`bin/<version>/`), Docker/Podman containers, start/stop, launch flags, data-version tracking |
@@ -62,6 +66,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - **Pin the client in long-running async work** (`const m = api()` before the first `await`). The user can switch servers mid-flight, and `api()` would then return the new server.
 - **UI consistency:** use the tokens (`--bg*`, `--fg*`, `--accent*`, `--control-h`), never raw colors in components. Buttons, inputs and selects share `--control-h`; icon-only buttons are `.icon-btn` (24px) or `button.square` (control height).
 - **Supported Meilisearch: 1.18.0 and newer** (the first release with a published OpenAPI spec). Calls to operations in `since.json` must be gated in the same file (`supports`/`needs`/`<Requires op>`); `coverage --strict` fails otherwise. Old specs sometimes list a route later than it really shipped: `PRESENT_AT_MIN` in `gen-since.mjs` holds those, verified against a live 1.18 server. Don't add support for anything older.
+- **Hosted mode:** the browser has no URLs or keys, only server IDs. Every API call carries `X-MeiliOps: 1` (the server's CSRF guard) and goes to `api/servers/<id>`; the server strips browser auth headers and adds the key. Gate desktop-only UI (connection form, local instances, MCP card) with `hosted`. The server refuses `/keys*` unless `MEILIOPS_ALLOW_KEY_MANAGEMENT` (keys in plain text would outlive SSO), and must never let one bad request throw out of the request handler (it would kill the pod). Sign-in is either built in (`MEILIOPS_AUTH_ENABLED`: auth-code + PKCE, ID token verified against JWKS, HMAC-signed stateless session cookie) or an SSO proxy in front, whose user headers are trusted only when built-in auth is off. Behind a Gateway the path is forwarded as-is, so the server strips `MEILIOPS_PUBLIC_PATH` itself and every app URL must stay relative. `/healthz` skips auth for probes. After touching `app/server/auth.ts`, run `scripts/test-hosted-auth.mjs`.
 - Some experimental features are **launch flags** (logs route, metrics, task streaming); others are runtime toggles (`/experimental-features`). `ApiError` points users to the right one.
 
 ## 🔁 Updating to a new Meilisearch release

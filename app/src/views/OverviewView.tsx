@@ -5,6 +5,7 @@ import { copyText } from "../lib/platform";
 import { ApiError, Spinner, Stat, formatBytes, formatAgo, formatDate, formatNumber } from "../components/ui";
 import { IconRefresh } from "../components/icons";
 import { supports } from "../lib/compat";
+import { hosted } from "../lib/hosted";
 
 interface GlobalStats {
   databaseSize: number;
@@ -85,7 +86,8 @@ export default function OverviewView() {
         Commit {server().version?.commitSha?.slice(0, 10)} · {formatDate(server().version?.commitDate)}
       </div>
 
-      <Show when={supports("POST /mcp")}>
+      {/* Hosted mode: the proxied URL needs the SSO session and MeiliOps' CSRF header, so MCP clients can't use it. */}
+      <Show when={supports("POST /mcp") && !hosted}>
         <McpCard />
       </Show>
 

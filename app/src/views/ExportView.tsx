@@ -1,5 +1,6 @@
-import { For, createSignal } from "solid-js";
+import { For, Show, createSignal } from "solid-js";
 import { api, connections, activeId, getConnectionKey, indexes, trackTask } from "../state/app";
+import { hosted, hostedExportUrl } from "../lib/hosted";
 import { IconPlus, IconX } from "../components/icons";
 
 interface Row {
@@ -19,9 +20,16 @@ export default function ExportView() {
   const useConnection = async (id: string) => {
     const c = connections.find((x) => x.id === id);
     if (!c) return;
+    // Hosted mode: the browser has no URLs or keys; the MeiliOps server fills them in.
+    if (hosted) {
+      setUrl(hostedExportUrl(c.id));
+      setKey("");
+      return;
+    }
     setUrl(c.url);
     setKey(c.hasKey ? ((await getConnectionKey(c.id)) ?? "") : "");
   };
+  const toConfigured = () => hosted && url().startsWith("meiliops:");
 
   const update = (i: number, patch: Partial<Row>) => setRows(rows().map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
@@ -30,7 +38,7 @@ export default function ExportView() {
     for (const r of rows()) if (r.pattern.trim()) idx[r.pattern.trim()] = { filter: r.filter.trim() || null, overrideSettings: r.overrideSettings };
     trackTask(
       api().req("POST", "/export", { body: { url: url().trim(), apiKey: key() || null, payloadSize: payloadSize() || null, indexes: idx } }),
-      `Export to ${url()}`,
+      `Export to ${toConfigured() ? (connections.find((c) => hostedExportUrl(c.id) === url())?.name ?? url()) : url()}`,
     );
   };
 
@@ -51,10 +59,12 @@ export default function ExportView() {
             </select>
           </div>
         </label>
-        <label class="field">
-          <span>Destination API key</span>
-          <input type="password" class="mono" value={key()} onInput={(e) => setKey(e.currentTarget.value)} autocomplete="off" />
-        </label>
+        <Show when={!toConfigured()} fallback={<p class="muted small">The MeiliOps server adds this server's address and API key.</p>}>
+          <label class="field">
+            <span>Destination API key</span>
+            <input type="password" class="mono" value={key()} onInput={(e) => setKey(e.currentTarget.value)} autocomplete="off" />
+          </label>
+        </Show>
         <label class="field">
           <span>Payload size per request (optional)</span>
           <input value={payloadSize()} onInput={(e) => setPayloadSize(e.currentTarget.value)} placeholder="e.g. 24MiB" />
