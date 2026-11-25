@@ -6,7 +6,8 @@
 
 import { For, JSX, Show, createSignal, onCleanup, onMount } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { activeConnection, activeId, connect, connected, connections, disconnect, openConnectionForm, server, setView, view } from "../state/app";
+import { activeConnection, activeId, connect, connected, connections, disconnect, hostedUser, openConnectionForm, server, setView, view } from "../state/app";
+import { hosted } from "../lib/hosted";
 import { runningCount } from "../state/instances";
 import { ThemeMode, setThemeMode, themeMode } from "../state/theme";
 import { isTauri } from "../lib/platform";
@@ -67,7 +68,7 @@ export default function TitleBar() {
 
   return (
     <header class="titlebar" classList={{ mac: isMac }} data-tauri-drag-region>
-      <img class="titlebar-logo" src="/icon.svg" alt="" data-tauri-drag-region />
+      <img class="titlebar-logo" src="icon.svg" alt="" data-tauri-drag-region />
       <span class="titlebar-app" data-tauri-drag-region>
         MeiliOps
       </span>
@@ -166,11 +167,15 @@ function ConnectionPicker() {
                 <span class="dot" style={{ background: c.color }} />
                 <span class="grow ellipsis">
                   {c.name}
-                  <span class="popover-sub">{c.url}</span>
+                  <Show when={!hosted}>
+                    <span class="popover-sub">{c.url}</span>
+                  </Show>
                 </span>
                 <Show when={activeId() === c.id}>
                   <IconCheck class="popover-check" />
                 </Show>
+                {/* Hosted mode: connections come from the server's configuration. */}
+                <Show when={!hosted}>
                 <button
                   class="icon-btn"
                   title="Edit connection"
@@ -182,33 +187,43 @@ function ConnectionPicker() {
                 >
                   <IconPencil />
                 </button>
+                </Show>
               </div>
             )}
           </For>
           <div class="popover-divider" />
-          <div
-            class="popover-item"
-            onClick={() => {
-              close();
-              openConnectionForm();
-            }}
+          <Show
+            when={!hosted}
+            fallback={
+              <Show when={hostedUser()}>
+                <div class="popover-empty">Signed in as {hostedUser()}</div>
+              </Show>
+            }
           >
-            <IconPlus class="popover-icon" />
-            <span class="grow">New connection…</span>
-          </div>
-          <div
-            class="popover-item"
-            onClick={() => {
-              close();
-              setView({ kind: "instances" });
-            }}
-          >
-            <IconServer class="popover-icon" />
-            <span class="grow">Local instances</span>
-            <Show when={runningCount() > 0}>
-              <span class="pill status-succeeded">{runningCount()} running</span>
-            </Show>
-          </div>
+            <div
+              class="popover-item"
+              onClick={() => {
+                close();
+                openConnectionForm();
+              }}
+            >
+              <IconPlus class="popover-icon" />
+              <span class="grow">New connection…</span>
+            </div>
+            <div
+              class="popover-item"
+              onClick={() => {
+                close();
+                setView({ kind: "instances" });
+              }}
+            >
+              <IconServer class="popover-icon" />
+              <span class="grow">Local instances</span>
+              <Show when={runningCount() > 0}>
+                <span class="pill status-succeeded">{runningCount()} running</span>
+              </Show>
+            </div>
+          </Show>
           <Show when={activeId()}>
             <div
               class="popover-item"

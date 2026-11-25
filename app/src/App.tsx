@@ -4,7 +4,7 @@ import Sidebar from "./views/Sidebar";
 import TitleBar from "./views/TitleBar";
 import StatusBar from "./views/StatusBar";
 import { Toasts, Empty, Spinner, ViewBoundary } from "./components/ui";
-import { View, activeConnection, activeId, connect, connected, connections, disconnect, loadConnections, openConnectionForm, retryNow, server, setView, view } from "./state/app";
+import { View, activeConnection, activeId, connect, connected, connections, disconnect, hostedUser, loadConnections, openConnectionForm, retryNow, server, setView, view } from "./state/app";
 import ConnectionForm from "./views/ConnectionForm";
 import OverviewView from "./views/OverviewView";
 import IndexView from "./views/IndexView";
@@ -30,6 +30,7 @@ import "./styles.css";
 import { loadTheme } from "./state/theme";
 import { IconPencil, IconPlus, IconRefresh, IconServer, IconUnplug, IconWarning } from "./components/icons";
 import { MIN_VERSION, belowMinimum, serverVersion } from "./lib/compat";
+import { hosted } from "./lib/hosted";
 
 /** Server-level screens that need an active connection. */
 const CONNECTED_VIEWS: Partial<Record<View["kind"], Component>> = {
@@ -106,9 +107,11 @@ export default function App() {
                 <button class="primary" onClick={() => connect(activeId()!)}>
                   <IconRefresh /> Retry
                 </button>
-                <button onClick={() => openConnectionForm(activeId())}>
-                  <IconPencil /> Edit connection
-                </button>
+                <Show when={!hosted}>
+                  <button onClick={() => openConnectionForm(activeId())}>
+                    <IconPencil /> Edit connection
+                  </button>
+                </Show>
                 <button onClick={() => disconnect()}>Back</button>
               </div>
             </Empty>
@@ -147,7 +150,7 @@ export default function App() {
 function Welcome() {
   return (
     <div class="welcome">
-      <img class="welcome-logo" src="/icon.svg" alt="" />
+      <img class="welcome-logo" src="icon.svg" alt="" />
       <h1>MeiliOps</h1>
       <p class="muted">A fast, native admin app for Meilisearch.</p>
       <Show when={connections.length > 0}>
@@ -158,21 +161,29 @@ function Welcome() {
                 <span class="dot" style={{ background: c.color }} />
                 <span class="grow ellipsis">
                   <b>{c.name}</b>
-                  <span class="popover-sub">{c.url}</span>
+                  <Show when={!hosted}>
+                    <span class="popover-sub">{c.url}</span>
+                  </Show>
                 </span>
               </button>
             )}
           </For>
         </div>
       </Show>
-      <div class="row">
-        <button class="primary" onClick={() => openConnectionForm()}>
-          <IconPlus /> New connection
-        </button>
-        <button onClick={() => setView({ kind: "instances" })}>
-          <IconServer /> Run Meilisearch locally
-        </button>
-      </div>
+      {/* Hosted mode: the server's configuration lists the connections. */}
+      <Show when={!hosted}>
+        <div class="row">
+          <button class="primary" onClick={() => openConnectionForm()}>
+            <IconPlus /> New connection
+          </button>
+          <button onClick={() => setView({ kind: "instances" })}>
+            <IconServer /> Run Meilisearch locally
+          </button>
+        </div>
+      </Show>
+      <Show when={hosted && hostedUser()}>
+        <p class="muted small">Signed in as {hostedUser()}</p>
+      </Show>
     </div>
   );
 }

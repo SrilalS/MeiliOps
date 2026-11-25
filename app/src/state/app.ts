@@ -2,6 +2,7 @@ import { batch, createSignal, createRoot } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { EnqueuedTask, Meili, Task, errorMessage, isNetworkError } from "../api/meili";
 import { loadSetting, saveSetting, secrets } from "../lib/platform";
+import { hosted, hostedServerUrl, loadHostedConfig } from "../lib/hosted";
 
 // ---------- types ----------
 
@@ -128,8 +129,25 @@ export function notifyError(e: unknown, prefix?: string) {
 
 const PALETTE = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#06b6d4", "#a855f7", "#84cc16", "#ec4899"];
 
+const [hostedUser, setHostedUser] = createSignal<string | null>(null);
+const [keyManagement, setKeyManagement] = createSignal(!hosted);
+/** Hosted mode: who the SSO proxy says is signed in. */
+export { hostedUser };
+/** The API keys screen is available (always on desktop; hosted servers opt in). */
+export { keyManagement };
+
 export async function loadConnections() {
-  state.setConnections(await loadSetting<Connection[]>("connections", []));
+  if (!hosted) return state.setConnections(await loadSetting<Connection[]>("connections", []));
+  // Hosted mode: the server owns the connections and their keys.
+  try {
+    const cfg = await loadHostedConfig();
+    setHostedUser(cfg.user);
+    setKeyManagement(cfg.keyManagement);
+    state.setConnections(cfg.servers.map((s) => ({ id: s.id, name: s.name, color: s.color, url: hostedServerUrl(s.id), hasKey: false })));
+    if (cfg.servers.length === 1) connect(cfg.servers[0].id);
+  } catch (e) {
+    notifyError(e);
+  }
 }
 
 async function persistConnections() {

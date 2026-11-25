@@ -1,0 +1,93 @@
+# MeiliOps (hosted mode) for a Kubernetes cluster that already runs Meilisearch.
+#
+# - Each Meilisearch server is MEILIOPS_SERVER_<ID>_URL plus an optional _KEY, _NAME and _COLOR.
+# - Keys come from a Secret and stay in the pod: the browser never sees them.
+# - Sign-in is not done here: put SSO in front of the Service (e.g. ingress-nginx with
+#   oauth2-proxy). MeiliOps reads the signed-in user from the proxy's headers for its audit log.
+#
+# Edit the Secret and the env below, then: kubectl apply -f meiliops.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: meiliops-keys
+  namespace: meiliops
+type: Opaque
+stringData:
+  # One entry per server. Every signed-in user acts with this key, so scope it to what
+  # MeiliOps users may do. Leave out the keys.* actions unless you set
+  # MEILIOPS_ALLOW_KEY_MANAGEMENT: the /keys routes reveal API keys in plain text.
+  prod: "REPLACE_WITH_MEILISEARCH_KEY"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meiliops
+  namespace: meiliops
+  labels: { app: meiliops }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: meiliops }
+  template:
+    metadata:
+      labels: { app: meiliops }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: meiliops
+          # Build from app/ (podman build -f Containerfile .) and push to your registry.
+          image: registry.example.com/meiliops-web:0.4.1
+          ports:
+            - { name: http, containerPort: 8080 }
+          env:
+            - { name: MEILIOPS_SERVER_PROD_URL, value: "http://meilisearch.search.svc.cluster.local:7700" }
+            - { name: MEILIOPS_SERVER_PROD_NAME, value: "Production" }
+            - name: MEILIOPS_SERVER_PROD_KEY
+              valueFrom: { secretKeyRef: { name: meiliops-keys, key: prod } }
+            # Off by default: the API keys screen shows keys in plain text, which lets a user
+            # keep access after leaving SSO. Turn on only if users may manage keys anyway.
+            # - { name: MEILIOPS_ALLOW_KEY_MANAGEMENT, value: "true" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meiliops
+  namespace: meiliops
+spec:
+  selector: { app: meiliops }
+  ports:
+    - { name: http, port: 80, targetPort: http }
+---
+# Only the SSO path may reach MeiliOps. The pod trusts the user headers the SSO proxy
+# sets (for the audit log), so anything else in the cluster must not be able to call it.
+# Adjust the selector to where your ingress controller / oauth2-proxy runs.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: meiliops-ingress-only
+  namespace: meiliops
+spec:
+  podSelector:
+    matchLabels: { app: meiliops }
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: ingress-nginx }
+      ports:
+        - { port: 8080 }

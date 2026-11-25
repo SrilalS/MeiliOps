@@ -1,10 +1,11 @@
 import { Component, For, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { activeId, connect, connected, connections, indexes, openConnectionForm, refreshIndexes, setView, view, View } from "../state/app";
+import { activeId, connect, connected, connections, indexes, keyManagement, openConnectionForm, refreshIndexes, setView, view, View } from "../state/app";
 import { formatNumber } from "../components/ui";
 import CreateIndexDialog from "./CreateIndexDialog";
 import { runningCount } from "../state/instances";
 import { GatedOp, needs } from "../lib/compat";
+import { hosted } from "../lib/hosted";
 import {
   IconActivity,
   IconDatabase,
@@ -71,9 +72,11 @@ export default function Sidebar() {
         <div class="sidebar-section">
           <div class="sidebar-title">
             <span>Connections</span>
-            <button class="icon-btn" title="New connection" onClick={() => openConnectionForm()}>
-              <IconPlus />
-            </button>
+            <Show when={!hosted}>
+              <button class="icon-btn" title="New connection" onClick={() => openConnectionForm()}>
+                <IconPlus />
+              </button>
+            </Show>
           </div>
           <For each={connections} fallback={<div class="muted small pad">No connections yet</div>}>
             {(c) => (
@@ -82,26 +85,30 @@ export default function Sidebar() {
                   <span class="dot" style={{ background: c.color }} />
                 </span>
                 <span class="grow ellipsis">{c.name}</span>
-                <button
-                  class="icon-btn subtle"
-                  title="Edit connection"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openConnectionForm(c.id);
-                  }}
-                >
-                  <IconPencil />
-                </button>
+                <Show when={!hosted}>
+                  <button
+                    class="icon-btn subtle"
+                    title="Edit connection"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openConnectionForm(c.id);
+                    }}
+                  >
+                    <IconPencil />
+                  </button>
+                </Show>
               </div>
             )}
           </For>
-          <div class="nav-item" classList={{ active: view().kind === "instances" }} onClick={() => setView({ kind: "instances" })} title="Run Meilisearch on this computer">
-            <IconServer class="nav-icon" />
-            <span class="grow">Local instances</span>
-            <Show when={runningCount() > 0}>
-              <span class="pill status-succeeded">{runningCount()}</span>
-            </Show>
-          </div>
+          <Show when={!hosted}>
+            <div class="nav-item" classList={{ active: view().kind === "instances" }} onClick={() => setView({ kind: "instances" })} title="Run Meilisearch on this computer">
+              <IconServer class="nav-icon" />
+              <span class="grow">Local instances</span>
+              <Show when={runningCount() > 0}>
+                <span class="pill status-succeeded">{runningCount()}</span>
+              </Show>
+            </div>
+          </Show>
         </div>
       </Show>
 
@@ -111,7 +118,8 @@ export default function Sidebar() {
             {(g) => (
               <>
                 <div class="nav-group">{g.group}</div>
-                <For each={g.items}>
+                {/* Hosted servers hide API keys unless they allow key management. */}
+                <For each={g.items.filter((n) => n.kind !== "keys" || keyManagement())}>
                   {(n) => (
                     <div
                       class="nav-item"

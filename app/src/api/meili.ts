@@ -6,6 +6,7 @@
 // scanning the source for `req("METHOD", "/path"`.
 
 import type { paths } from "./schema";
+import { hosted } from "../lib/hosted";
 
 export type ApiPath = keyof paths & string;
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -116,6 +117,8 @@ export class Meili {
   headers(contentType?: string): Record<string, string> {
     const h: Record<string, string> = {};
     if (this.key) h.Authorization = `Bearer ${this.key}`;
+    // Hosted mode: the MeiliOps server only proxies requests that carry this header (CSRF guard).
+    if (hosted) h["X-MeiliOps"] = "1";
     if (contentType) h["Content-Type"] = contentType;
     return h;
   }
@@ -164,6 +167,12 @@ export class Meili {
     } catch (e) {
       if (isAbort(e) || init.signal?.aborted) throw e;
       const err = new NetworkError(this.url, e);
+      this.onUnreachable?.(err);
+      throw err;
+    }
+    // Hosted mode: the MeiliOps server answered, but Meilisearch behind it didn't.
+    if (res.headers.get("x-meiliops-upstream") === "unreachable") {
+      const err = new NetworkError(this.url);
       this.onUnreachable?.(err);
       throw err;
     }

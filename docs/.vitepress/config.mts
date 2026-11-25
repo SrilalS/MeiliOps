@@ -29,6 +29,7 @@ export default defineConfig({
             { text: "Getting started", link: "/guide/getting-started" },
             { text: "Connections", link: "/guide/connections" },
             { text: "Local instances", link: "/guide/local-instances" },
+            { text: "Web hosting (Kubernetes)", link: "/guide/hosted" },
           ],
         },
         {
