@@ -46,7 +46,7 @@ spec:
       containers:
         - name: meiliops
           # Build from app/ (podman build -f Containerfile .) and push to your registry.
-          image: registry.example.com/meiliops-web:0.4.1
+          image: registry.example.com/meiliops-web:0.5.0
           ports:
             - { name: http, containerPort: 8080 }
           env:
