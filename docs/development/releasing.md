@@ -33,10 +33,13 @@ git push origin v0.4.0
 | macOS (Apple Silicon and Intel) | `.dmg` for each |
 | Ubuntu 22.04 | `.deb`, `.rpm`, `.AppImage` |
 
-4. **Updater feed**: writes `latest.json` from the signed files (`.github/scripts/updater-manifest.mjs`) and fails if any platform is missing.
-5. **Publish**: only when every build succeeded, so a release never goes out missing a platform.
+4. **Container image**: once every desktop build succeeded, builds `app/Containerfile` for amd64 and arm64 and pushes `ghcr.io/srilals/meiliops-web:<version>` (and `:latest`, except for pre-releases) to GitHub Container Registry with the workflow's own token.
+5. **Updater feed**: writes `latest.json` from the signed files (`.github/scripts/updater-manifest.mjs`) and fails if any platform is missing.
+6. **Publish**: only when every build and the image succeeded, so a release never goes out missing a platform.
 
-Tags with a suffix (`v0.4.0-beta.1`) are published as pre-releases. Re-running a failed workflow reuses the existing draft.
+Tags with a suffix (`v0.4.0-beta.1`) are published as pre-releases. Re-running a failed workflow reuses the existing draft and pushes the image again under the same tags.
+
+The first image push creates the `meiliops-web` package on GitHub. Check once, under the repository's **Packages**, that its visibility is **Public**, so clusters can pull it without credentials.
 
 ## Update signing key
 

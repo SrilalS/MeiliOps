@@ -70,10 +70,16 @@ MeiliOps uses the authorization-code flow with PKCE, checks the ID token's signa
 
 ## Deploy
 
-Build the image from `app/` and push it to your registry:
+Every release from v0.5.1 publishes the image for amd64 and arm64:
 
 ```bash
-podman build -t registry.example.com/meiliops-web:0.5.0 -f Containerfile .
+podman pull ghcr.io/srilals/meiliops-web:0.5.1
+```
+
+Pin a version rather than `latest`, and mirror it to your own registry if your cluster only pulls from there. To build it yourself instead, from `app/`:
+
+```bash
+podman build -t meiliops-web -f Containerfile .
 ```
 
 The image is about 80 MB: Alpine with Node.js and no other dependencies. It runs as a non-root user and works with a read-only root filesystem. `/healthz` answers without sign-in, at the root and under the public path, for probes.
