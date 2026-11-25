@@ -42,3 +42,4 @@ export { default as IconWebhook } from "lucide-solid/icons/webhook";
 export { default as IconX } from "lucide-solid/icons/x";
 export { default as IconUpdate } from "lucide-solid/icons/circle-arrow-up";
 export { default as IconUnplug } from "lucide-solid/icons/unplug";
+export { default as IconWarning } from "lucide-solid/icons/triangle-alert";

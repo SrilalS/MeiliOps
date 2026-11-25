@@ -18,6 +18,8 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/src/api/meili.ts` | Dependency-free HTTP client. **Every call is `req("METHOD", "/literal/path")`**, typed against the generated OpenAPI types |
 | `app/src/api/schema.d.ts` | Generated from `app/spec/meilisearch-openapi.json` (don't edit) |
 | `app/src/api/operations.json` | Generated op catalog for the API console (`npm run gen`) |
+| `app/src/api/since.json` | Generated (`npm run gen` → `scripts/gen-since.mjs`): operations newer than the minimum supported Meilisearch (1.18) and the version that added each |
+| `app/src/lib/compat.ts` | Version gating: `supports`/`needs`/`settingMissing`, `MIN_VERSION`; `components/Requires.tsx` gates a whole screen |
 | `app/src/state/app.ts` | Connections, active client, task tracking (`trackTask`), toasts |
 | `app/src/state/instances.ts` | Local instance manager: side-by-side native versions (`bin/<version>/`), Docker/Podman containers, start/stop, launch flags, data-version tracking |
 | `app/src/lib/sse.ts` | Fetch-based SSE reader (EventSource can't send auth headers) |
@@ -59,14 +61,15 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 - **Connection states** (`state/app.ts`): `idle → connecting → ready ⇄ lost`, or `error`. `lost` means the server stopped answering mid-session: views stay mounted, a watchdog probes `/health`, and `ApiError` panels retry on their own once it's back. Use `connected()` (ready or lost) to decide what renders, and `online()` to gate polling. Open the connection form with `openConnectionForm()`, never `setView`, so Cancel returns to where the user was.
 - **Pin the client in long-running async work** (`const m = api()` before the first `await`). The user can switch servers mid-flight, and `api()` would then return the new server.
 - **UI consistency:** use the tokens (`--bg*`, `--fg*`, `--accent*`, `--control-h`), never raw colors in components. Buttons, inputs and selects share `--control-h`; icon-only buttons are `.icon-btn` (24px) or `button.square` (control height).
+- **Supported Meilisearch: 1.18.0 and newer** (the first release with a published OpenAPI spec). Calls to operations in `since.json` must be gated in the same file (`supports`/`needs`/`<Requires op>`); `coverage --strict` fails otherwise. Old specs sometimes list a route later than it really shipped: `PRESENT_AT_MIN` in `gen-since.mjs` holds those, verified against a live 1.18 server. Don't add support for anything older.
 - Some experimental features are **launch flags** (logs route, metrics, task streaming); others are runtime toggles (`/experimental-features`). `ApiError` points users to the right one.
 
 ## 🔁 Updating to a new Meilisearch release
 
 1. Download the release's `meilisearch-openapi.json` into `app/spec/`
-2. `npx openapi-typescript@7 spec/meilisearch-openapi.json -o src/api/schema.d.ts && npm run gen`
+2. `npx openapi-typescript@7 spec/meilisearch-openapi.json -o src/api/schema.d.ts && npm run gen` (also regenerates `since.json`; downloads each release's spec once into `spec/history/`)
 3. `npm run typecheck`: renamed or removed routes fail here
-4. `npm run coverage -- --strict`: new stable operations without a screen fail here
+4. `npm run coverage -- --strict`: new stable operations without a screen, and ungated calls to operations newer than 1.18, fail here
 
 ## 🚀 Releasing
 

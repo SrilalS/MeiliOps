@@ -28,7 +28,8 @@ import { trimMemoryWhenMinimized } from "./lib/platform";
 import "./fonts.css";
 import "./styles.css";
 import { loadTheme } from "./state/theme";
-import { IconPencil, IconPlus, IconRefresh, IconServer, IconUnplug } from "./components/icons";
+import { IconPencil, IconPlus, IconRefresh, IconServer, IconUnplug, IconWarning } from "./components/icons";
+import { MIN_VERSION, belowMinimum, serverVersion } from "./lib/compat";
 
 /** Server-level screens that need an active connection. */
 const CONNECTED_VIEWS: Partial<Record<View["kind"], Component>> = {
@@ -74,6 +75,15 @@ export default function App() {
             <button onClick={() => disconnect()}>
               <IconUnplug /> Disconnect
             </button>
+          </div>
+        </Show>
+        <Show when={connected() && belowMinimum() && view().kind !== "connection-form" && view().kind !== "instances"}>
+          <div class="warn-banner">
+            <IconWarning class="warn" />
+            <span class="grow">
+              <b>This server runs Meilisearch {serverVersion()}.</b>{" "}
+              <span class="muted">MeiliOps supports {MIN_VERSION} and newer, so some screens may not work. Upgrade Meilisearch to get full support.</span>
+            </span>
           </div>
         </Show>
         <Switch>

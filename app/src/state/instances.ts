@@ -8,6 +8,7 @@ import { createStore } from "solid-js/store";
 import { isTauri, loadSetting, saveSetting, secrets } from "../lib/platform";
 import { FlagDef, parseHelp } from "../lib/meiliHelp";
 import { Meili } from "../api/meili";
+import { MIN_VERSION, atLeast } from "../lib/compat";
 import { activeId, connect, connections, deleteConnection, saveConnection, notify, notifyError } from "./app";
 
 export type Engine = "native" | "docker" | "podman";
@@ -428,7 +429,8 @@ export async function listReleases(): Promise<Release[]> {
   const { platform, arch } = await platformInfo();
   const name = assetName(platform, arch);
   return (await res.json())
-    .filter((r: any) => !r.draft && /^v\d/.test(r.tag_name))
+    // Only versions MeiliOps supports.
+    .filter((r: any) => !r.draft && /^v\d/.test(r.tag_name) && atLeast(r.tag_name.slice(1), MIN_VERSION))
     .map((r: any): Release => {
       // Community edition (MIT) only — enterprise assets are BUSL-licensed.
       const asset = r.assets.find((a: any) => a.name === name);

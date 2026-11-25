@@ -4,6 +4,7 @@ import { errorMessage } from "../api/meili";
 import { copyText } from "../lib/platform";
 import { ApiError, Spinner, Stat, formatBytes, formatAgo, formatDate, formatNumber } from "../components/ui";
 import { IconRefresh } from "../components/icons";
+import { supports } from "../lib/compat";
 
 interface GlobalStats {
   databaseSize: number;
@@ -84,7 +85,9 @@ export default function OverviewView() {
         Commit {server().version?.commitSha?.slice(0, 10)} · {formatDate(server().version?.commitDate)}
       </div>
 
-      <McpCard />
+      <Show when={supports("POST /mcp")}>
+        <McpCard />
+      </Show>
 
       <h3>Indexes</h3>
       <Show when={!stats.loading} fallback={<Spinner />}>

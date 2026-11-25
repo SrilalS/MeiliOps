@@ -3,6 +3,8 @@ import { api, notifyError, trackTask } from "../state/app";
 import JsonEditor from "../components/JsonEditor";
 import { ApiError, Confirm, Modal, formatDate, formatNumber, pretty } from "../components/ui";
 import { IconPlus, IconRefresh } from "../components/icons";
+import Requires from "../components/Requires";
+import { needs } from "../lib/compat";
 
 interface Rule {
   uid: string;
@@ -46,6 +48,14 @@ const TEMPLATE = {
 const PAGE = 50;
 
 export default function SearchRulesView() {
+  return (
+    <Requires op="POST /dynamic-search-rules" feature="Search rules">
+      <SearchRules />
+    </Requires>
+  );
+}
+
+function SearchRules() {
   const [query, setQuery] = createSignal("");
   const [activeOnly, setActiveOnly] = createSignal<"" | "true" | "false">("");
   const [offset, setOffset] = createSignal(0);
@@ -102,7 +112,7 @@ export default function SearchRulesView() {
         <button class="square" onClick={refetch} title="Refresh">
           <IconRefresh />
         </button>
-        <button class="danger" onClick={() => setConfirm({ kind: "all" })}>
+        <button class="danger" disabled={!!needs("DELETE /dynamic-search-rules")} title={needs("DELETE /dynamic-search-rules")} onClick={() => setConfirm({ kind: "all" })}>
           Delete all…
         </button>
         <button class="primary" onClick={() => open()}>
@@ -116,8 +126,9 @@ export default function SearchRulesView() {
           <option value="true">Active only</option>
           <option value="false">Inactive only</option>
         </select>
-        <label class="check" title="Include the effect of pending rule tasks (showTarget). Requires the Enterprise Edition.">
-          <input type="checkbox" checked={showTarget()} onChange={(e) => (setOffset(0), setShowTarget(e.currentTarget.checked))} /> Show pending
+        {/* showTarget shipped with the target route (1.57). */}
+        <label class="check" title={needs("GET /dynamic-search-rules/{uid}/target") ?? "Include the effect of pending rule tasks (showTarget). Requires the Enterprise Edition."}>
+          <input type="checkbox" disabled={!!needs("GET /dynamic-search-rules/{uid}/target")} checked={showTarget()} onChange={(e) => (setOffset(0), setShowTarget(e.currentTarget.checked))} /> Show pending
         </label>
         <span class="grow" />
         <Show when={showTarget() && !page.error && page()}>
@@ -168,7 +179,8 @@ export default function SearchRulesView() {
                   <td class="nowrap">
                     <button
                       class="link small"
-                      title="State after all pending tasks for this rule are processed. Requires the Enterprise Edition."
+                      disabled={!!needs("GET /dynamic-search-rules/{uid}/target")}
+                      title={needs("GET /dynamic-search-rules/{uid}/target") ?? "State after all pending tasks for this rule are processed. Requires the Enterprise Edition."}
                       onClick={(e) => {
                         e.stopPropagation();
                         openTarget(r.uid);

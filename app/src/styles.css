@@ -1815,7 +1815,8 @@ table.grid td {
 }
 
 /* ---------- connection lost ---------- */
-.lost-banner {
+.lost-banner,
+.warn-banner {
   display: flex;
   align-items: center;
   gap: 10px;

@@ -1,6 +1,6 @@
 # Getting started
 
-MeiliOps is a desktop app for administering [Meilisearch](https://www.meilisearch.com) servers, in the spirit of MongoDB Compass and pgAdmin. It targets the **latest stable Meilisearch release** (currently v1.58).
+MeiliOps is a desktop app for administering [Meilisearch](https://www.meilisearch.com) servers, in the spirit of MongoDB Compass and pgAdmin. It targets the **latest stable Meilisearch release** (currently v1.58) and supports **every release from v1.18**. On an older server, screens for features it doesn't have explain which version they need.
 
 ## Install
 

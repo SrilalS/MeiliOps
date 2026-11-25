@@ -4,6 +4,7 @@ import { activeId, connect, connected, connections, indexes, openConnectionForm,
 import { formatNumber } from "../components/ui";
 import CreateIndexDialog from "./CreateIndexDialog";
 import { runningCount } from "../state/instances";
+import { GatedOp, needs } from "../lib/compat";
 import {
   IconActivity,
   IconDatabase,
@@ -25,7 +26,8 @@ import {
   IconWebhook,
 } from "../components/icons";
 
-type NavItem = { kind: View["kind"]; label: string; icon: Component<{ class?: string }> };
+/** `op`: the screen needs a Meilisearch version newer than the minimum. */
+type NavItem = { kind: View["kind"]; label: string; icon: Component<{ class?: string }>; op?: GatedOp };
 const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: "Server",
@@ -41,7 +43,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
     group: "Search",
     items: [
       { kind: "multi-search", label: "Multi-search", icon: IconSearch },
-      { kind: "search-rules", label: "Search rules", icon: IconRules },
+      { kind: "search-rules", label: "Search rules", icon: IconRules, op: "POST /dynamic-search-rules" },
       { kind: "chats", label: "Chats", icon: IconMessages },
     ],
   },
@@ -111,7 +113,12 @@ export default function Sidebar() {
                 <div class="nav-group">{g.group}</div>
                 <For each={g.items}>
                   {(n) => (
-                    <div class="nav-item" classList={{ active: view().kind === n.kind }} onClick={() => setView({ kind: n.kind } as View)}>
+                    <div
+                      class="nav-item"
+                      classList={{ active: view().kind === n.kind, muted: !!n.op && !!needs(n.op) }}
+                      title={n.op && needs(n.op)}
+                      onClick={() => setView({ kind: n.kind } as View)}
+                    >
                       <Dynamic component={n.icon} class="nav-icon" />
                       <span class="grow ellipsis">{n.label}</span>
                     </div>

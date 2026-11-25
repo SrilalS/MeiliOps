@@ -2,18 +2,10 @@ import { For, Show, createMemo, createResource, createSignal, onCleanup } from "
 import { api, indexes, notifyError, setView, trackTask } from "../../state/app";
 import { ApiError, Confirm, Spinner, formatNumber } from "../../components/ui";
 import { IconChevronRight } from "../../components/icons";
+import { FieldCaps, loadFieldCaps } from "../../lib/fieldCaps";
 import { FieldStats, SchemaAnalyzer, SchemaResult, ValueType, filterFor, isUnique, looksCategorical, topValues } from "../../lib/schema";
 
 type Doc = Record<string, unknown>;
-
-interface FieldCaps {
-  name: string;
-  searchable?: { enabled: boolean };
-  sortable?: { enabled: boolean };
-  displayed?: { enabled: boolean };
-  filterable?: { enabled: boolean; facetSearch?: boolean; comparison?: boolean };
-  distinct?: { enabled: boolean };
-}
 
 interface FacetResult {
   distribution: [string, number][];
@@ -36,18 +28,7 @@ export default function SchemaTab(props: { uid: string }) {
   const [search, setSearch] = createSignal("");
   const [makeFilterable, setMakeFilterable] = createSignal<string>();
 
-  const [caps, { refetch: refetchCaps }] = createResource(async () => {
-    const out = new Map<string, FieldCaps>();
-    for (let offset = 0; ; offset += 1000) {
-      const res = await api().req<{ results: FieldCaps[]; total: number }>("POST", "/indexes/{index_uid}/fields", {
-        path: { index_uid: props.uid },
-        body: { offset, limit: 1000 },
-      });
-      for (const f of res.results) out.set(f.name, f);
-      if (offset + res.results.length >= res.total || res.results.length === 0) break;
-    }
-    return out;
-  });
+  const [caps, { refetch: refetchCaps }] = createResource(() => loadFieldCaps(api(), props.uid));
 
   // Each run bumps the generation, so a newer run (or leaving the tab) stops an older one.
   let generation = 0;

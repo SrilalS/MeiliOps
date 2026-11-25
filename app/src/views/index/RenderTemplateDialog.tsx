@@ -3,6 +3,7 @@ import { api } from "../../state/app";
 import { errorMessage } from "../../api/meili";
 import { Modal, pretty } from "../../components/ui";
 import JsonEditor from "../../components/JsonEditor";
+import { needs } from "../../lib/compat";
 
 /** Try document templates / embedder fragments against a real document (POST /render-template). */
 export default function RenderTemplateDialog(props: { uid: string; kind: "documentTemplate" | "chatDocumentTemplate"; embedder?: string; onClose: () => void }) {
@@ -15,6 +16,8 @@ export default function RenderTemplateDialog(props: { uid: string; kind: "docume
   const [out, setOut] = createSignal("");
 
   const run = async () => {
+    const tooOld = needs("POST /render-template");
+    if (tooOld) return setOut(tooOld);
     try {
       setOut(pretty(await api().req("POST", "/render-template", { body: JSON.parse(body()) })));
     } catch (e) {
