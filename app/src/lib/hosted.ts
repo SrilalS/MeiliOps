@@ -16,13 +16,28 @@ export interface HostedConfig {
   user: string | null;
   /** The server proxies the /keys routes (MEILIOPS_ALLOW_KEY_MANAGEMENT). */
   keyManagement: boolean;
+  /** The server signs users in itself (MEILIOPS_AUTH_*), so it can sign them out. */
+  signOut: boolean;
 }
+
+/** The server's session ended: go through sign-in and come back to this page. */
+export function signInAgain() {
+  const url = new URL("auth/login", document.baseURI);
+  url.searchParams.set("returnTo", location.pathname + location.search);
+  location.assign(url.href);
+}
+
+export const signOut = () => location.assign(new URL("auth/logout", document.baseURI).href);
+
+/** A response from the MeiliOps server saying the session has ended. */
+export const isLoginRequired = (res: Response) => res.status === 401 && res.headers.get("x-meiliops-auth") === "login";
 
 /** Resolved against the page, so MeiliOps also works under a sub-path the ingress strips. */
 const apiUrl = (path: string) => new URL(path, document.baseURI).href;
 
 export async function loadHostedConfig(): Promise<HostedConfig> {
   const res = await fetch(apiUrl("api/config"), { cache: "no-store" });
+  if (isLoginRequired(res)) signInAgain();
   if (!res.ok) throw new Error(`Couldn't load the MeiliOps server configuration (HTTP ${res.status})`);
   return res.json();
 }

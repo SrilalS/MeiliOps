@@ -6,8 +6,8 @@
 
 import { For, JSX, Show, createSignal, onCleanup, onMount } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { activeConnection, activeId, connect, connected, connections, disconnect, hostedUser, openConnectionForm, server, setView, view } from "../state/app";
-import { hosted } from "../lib/hosted";
+import { activeConnection, activeId, connect, connected, connections, disconnect, hostedSignOut, hostedUser, openConnectionForm, server, setView, view } from "../state/app";
+import { hosted, signOut } from "../lib/hosted";
 import { runningCount } from "../state/instances";
 import { ThemeMode, setThemeMode, themeMode } from "../state/theme";
 import { isTauri } from "../lib/platform";
@@ -195,9 +195,17 @@ function ConnectionPicker() {
           <Show
             when={!hosted}
             fallback={
-              <Show when={hostedUser()}>
-                <div class="popover-empty">Signed in as {hostedUser()}</div>
-              </Show>
+              <>
+                <Show when={hostedUser()}>
+                  <div class="popover-empty">Signed in as {hostedUser()}</div>
+                </Show>
+                <Show when={hostedSignOut()}>
+                  <div class="popover-item" onClick={signOut}>
+                    <IconUnplug class="popover-icon" />
+                    <span class="grow">Sign out</span>
+                  </div>
+                </Show>
+              </>
             }
           >
             <div

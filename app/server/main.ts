@@ -1,11 +1,12 @@
 // MeiliOps hosted mode: serves the web build and proxies API calls to the
 // configured Meilisearch servers, adding their API keys server-side so keys
-// never reach the browser. Sign-in (SSO) is expected in front of this server,
-// e.g. an ingress with oauth2-proxy; the signed-in user is read from the
-// headers that proxy sets and written to the audit log.
+// never reach the browser. Users sign in either here (built-in OpenID Connect,
+// MEILIOPS_AUTH_*) or in an SSO proxy in front of it, whose user headers are
+// then trusted. Every change (and, optionally, every read) is audit-logged.
 //
-// Routes:
-//   GET  /healthz                     liveness/readiness
+// Routes (under MEILIOPS_PUBLIC_PATH when set):
+//   GET  /healthz                     liveness/readiness (also at the root, for probes)
+//   GET  /auth/login|callback|logout  built-in sign-in
 //   GET  /api/config                  servers (id, name, color; no URLs or keys), the signed-in user,
 //                                     and whether the key routes are allowed
 //   *    /api/servers/<id>/<path>     proxied to <server url>/<path>
@@ -16,9 +17,11 @@ import { IncomingMessage, OutgoingHttpHeaders, ServerResponse, createServer, req
 import { request as httpsRequest } from "node:https";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Auth, SignInError } from "./auth.js";
 import { ServerConfig, loadConfig } from "./config.js";
 
 const cfg = loadConfig(process.env);
+const auth = cfg.auth ? new Auth(cfg.auth, cfg.publicPath) : undefined;
 const servers = new Map(cfg.servers.map((s) => [s.id, s]));
 const staticDir = resolve(process.env.MEILIOPS_STATIC_DIR ?? join(dirname(fileURLToPath(import.meta.url)), "public"));
 const indexHtml = join(staticDir, "index.html");
@@ -67,14 +70,38 @@ const DROP_RESPONSE = new Set(["connection", "keep-alive", "transfer-encoding", 
 const EXPORT_BODY_LIMIT = 1 << 20;
 /** Routes that answer with a long-lived stream (SSE / chunked logs). */
 const STREAMING = /(\/stream|\/chat\/completions|^\/mcp)$/;
+/** POST routes that only read data (searches, document fetches); audited as reads. */
+const READ_POSTS = /(\/search|\/documents\/fetch|\/facet-search|\/similar|\/fields|^\/multi-search|^\/render-template|\/chat\/completions|^\/mcp|^\/dynamic-search-rules)$/;
+/** Reads that return indexed data (documents, hits, task payloads), audited with MEILIOPS_AUDIT=all. */
+const DATA_READS = /(\/documents(\/.*)?|\/search|\/facet-search|\/similar|^\/multi-search|\/chat\/completions|^\/tasks\/\d+\/documents|^\/mcp)$/;
 
-const user = (req: IncomingMessage) => {
+/**
+ * Who is making the request. With built-in sign-in, the session; otherwise the
+ * headers an SSO proxy in front of MeiliOps sets (trusted only behind that proxy).
+ */
+const user = (req: IncomingMessage): string | undefined => {
+  if (auth) {
+    const u = auth.user(req);
+    return u && (u.name === u.id ? u.id : `${u.name} (${u.id})`);
+  }
   for (const h of cfg.userHeaders) {
     const v = req.headers[h];
     if (typeof v === "string" && v) return v;
   }
   return undefined;
 };
+
+/** A small standalone page (sign-in errors, signed out). */
+function page(res: ServerResponse, status: number, title: string, message: string, link?: { href: string; text: string }) {
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  res.writeHead(status, { ...SECURITY_HEADERS, "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+  res.end(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MeiliOps</title>` +
+      `<style>body{font:15px/1.5 system-ui,sans-serif;background:#16002f;color:#f1ecff;display:grid;place-items:center;min-height:100vh;margin:0}` +
+      `main{max-width:28rem;padding:2rem;text-align:center}h1{font-size:1.3rem}a{color:#ff5caa}p{color:#c9bde6}</style></head>` +
+      `<body><main><h1>${esc(title)}</h1><p>${esc(message)}</p>${link ? `<p><a href="${esc(link.href)}">${esc(link.text)}</a></p>` : ""}</main></body></html>`,
+  );
+}
 
 function audit(entry: Record<string, unknown>) {
   console.log(JSON.stringify({ time: new Date().toISOString(), ...entry }));
@@ -149,9 +176,12 @@ function rewriteExport(body: Buffer): Buffer | string {
 
 async function proxy(req: IncomingMessage, res: ServerResponse, srv: ServerConfig, rest: string, search: string) {
   const started = Date.now();
-  const isWrite = req.method !== "GET" && req.method !== "HEAD";
+  const isRead = req.method === "GET" || req.method === "HEAD" || (req.method === "POST" && READ_POSTS.test(rest));
+  // "all" adds reads of data (documents, search results), not the polling of tasks, stats or
+  // settings, which would log a line every few seconds per open screen.
+  const audited = !isRead || (cfg.audit === "all" && DATA_READS.test(rest));
   const log = (status: number | undefined, extra: Record<string, unknown> = {}) =>
-    audit({ user: user(req) ?? null, server: srv.id, method: req.method, path: rest + search, status, ms: Date.now() - started, ...extra });
+    audit({ user: user(req) ?? null, server: srv.id, kind: isRead ? "read" : "write", method: req.method, path: rest + search, status, ms: Date.now() - started, ...extra });
   const refuse = (status: number, code: string, message: string) => {
     log(status, { refused: code });
     apiError(res, status, code, message);
@@ -196,10 +226,10 @@ async function proxy(req: IncomingMessage, res: ServerResponse, srv: ServerConfi
     // Node holds headers back until the first body chunk; a quiet stream would never open.
     res.flushHeaders();
     ur.pipe(res);
-    if (isWrite) log(ur.statusCode);
+    if (audited) log(ur.statusCode);
   });
   up.on("error", (e) => {
-    if (isWrite) log(502, { error: e.message });
+    if (audited) log(502, { error: e.message });
     if (res.headersSent) return res.destroy();
     // The header tells the app to treat this like a network failure (reconnect banner), not an API error.
     sendJson(res, 502, { message: `MeiliOps couldn't reach ${srv.name}: ${e.message}`, code: "meiliops_upstream_unreachable", type: "meiliops", link: null }, { "x-meiliops-upstream": "unreachable" });
@@ -219,15 +249,64 @@ function safeDecode(s: string): string | undefined {
   }
 }
 
-function handle(req: IncomingMessage, res: ServerResponse) {
+async function handle(req: IncomingMessage, res: ServerResponse) {
   const url = new URL(req.url ?? "/", "http://localhost");
-  const path = url.pathname;
-  if (path === "/healthz") return sendJson(res, 200, { status: "ok" });
+  const base = cfg.publicPath;
+  // Probes hit the pod directly, without the public path.
+  if (url.pathname === "/healthz" || url.pathname === `${base}/healthz`) return sendJson(res, 200, { status: "ok" });
+
+  // Served under a path the ingress forwards as-is (no rewrite), like Temporal UI's /temporal.
+  if (base) {
+    if (url.pathname === base) {
+      res.writeHead(308, { location: `${base}/${url.search}` });
+      return res.end();
+    }
+    if (!url.pathname.startsWith(`${base}/`)) return apiError(res, 404, "not_found", "Not found");
+  }
+  const path = url.pathname.slice(base.length);
+
+  if (auth) {
+    try {
+      if (path === "/auth/login") return await auth.login(res, url.searchParams.get("returnTo") ?? `${base}/`);
+      if (path === "/auth/callback") {
+        const u = await auth.callback(req, res, url.searchParams);
+        return audit({ user: u.name === u.id ? u.id : `${u.name} (${u.id})`, event: "sign-in" });
+      }
+    } catch (e) {
+      const known = e instanceof SignInError;
+      if (known) audit({ user: null, event: "sign-in refused", reason: e.detail ?? e.message });
+      else {
+        // fetch() reports only "fetch failed"; the cause says why (DNS, refused, TLS, timeout).
+        const cause = (e as { cause?: { code?: string; message?: string } }).cause;
+        console.error(JSON.stringify({ time: new Date().toISOString(), msg: "sign-in failed", error: (e as Error).message, cause: cause?.code ?? cause?.message }));
+      }
+      return page(res, known ? e.status : 502, "Couldn't sign you in", known ? e.message : "The sign-in provider couldn't be reached. Try again in a moment.", {
+        href: `${base}/auth/login`,
+        text: "Try again",
+      });
+    }
+    if (path === "/auth/logout") {
+      if (auth.user(req)) audit({ user: user(req) ?? null, event: "sign-out" });
+      return auth.logout(res);
+    }
+    if (path === "/auth/signed-out") return page(res, 200, "You're signed out of MeiliOps", "Your organization's sign-in may still be active in this browser.", { href: `${base}/auth/login`, text: "Sign in again" });
+
+    // Everything else needs a session.
+    if (!auth.user(req)) {
+      if (path.startsWith("/api/")) {
+        return sendJson(res, 401, { message: "Your MeiliOps session has ended. Sign in again.", code: "meiliops_login_required", type: "meiliops", link: null }, { "x-meiliops-auth": "login" });
+      }
+      res.writeHead(302, { location: `${base}/auth/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`, "cache-control": "no-store" });
+      return res.end();
+    }
+  }
+
   if (path === "/api/config") {
     if (req.method !== "GET") return apiError(res, 405, "method_not_allowed", "Method not allowed");
     return sendJson(res, 200, {
       servers: cfg.servers.map(({ id, name, color }) => ({ id, name, color })),
-      user: user(req) ?? null,
+      user: (auth ? auth.user(req)?.name : user(req)) ?? null,
+      signOut: !!auth,
       keyManagement: cfg.allowKeyManagement,
     });
   }
@@ -247,13 +326,11 @@ function handle(req: IncomingMessage, res: ServerResponse) {
 
 const server = createServer((req, res) => {
   // Never let one bad request take the process (and every user's session) down.
-  try {
-    handle(req, res);
-  } catch (e) {
+  handle(req, res).catch((e) => {
     console.error(JSON.stringify({ time: new Date().toISOString(), msg: "request failed", url: req.url, error: (e as Error).message }));
     if (!res.headersSent) apiError(res, 400, "meiliops_bad_request", "Bad request");
     else res.destroy();
-  }
+  });
 });
 
 // Streams (logs, tasks) stay open for a long time: no request timeout.
@@ -265,6 +342,9 @@ server.listen(cfg.port, () => {
       msg: `MeiliOps listening on :${cfg.port}`,
       servers: cfg.servers.map((s) => ({ id: s.id, name: s.name, url: s.url, key: s.key ? "set" : "none" })),
       keyManagement: cfg.allowKeyManagement,
+      publicPath: cfg.publicPath || "/",
+      auth: cfg.auth ? { issuer: cfg.auth.issuer, clientId: cfg.auth.clientId, callback: cfg.auth.callbackUrl.href, allowedGroups: cfg.auth.allowedGroups.length } : "off (trusting SSO proxy headers)",
+      audit: cfg.audit,
     }),
   );
 });

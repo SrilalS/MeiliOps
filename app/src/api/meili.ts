@@ -6,7 +6,7 @@
 // scanning the source for `req("METHOD", "/path"`.
 
 import type { paths } from "./schema";
-import { hosted } from "../lib/hosted";
+import { hosted, isLoginRequired, signInAgain } from "../lib/hosted";
 
 export type ApiPath = keyof paths & string;
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -170,6 +170,8 @@ export class Meili {
       this.onUnreachable?.(err);
       throw err;
     }
+    // Hosted mode: the MeiliOps session ended (sign-in expired). Sign in again and come back.
+    if (hosted && isLoginRequired(res)) signInAgain();
     // Hosted mode: the MeiliOps server answered, but Meilisearch behind it didn't.
     if (res.headers.get("x-meiliops-upstream") === "unreachable") {
       const err = new NetworkError(this.url);

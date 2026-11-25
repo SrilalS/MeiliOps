@@ -131,8 +131,11 @@ const PALETTE = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#06b6d4", "#a855f7
 
 const [hostedUser, setHostedUser] = createSignal<string | null>(null);
 const [keyManagement, setKeyManagement] = createSignal(!hosted);
-/** Hosted mode: who the SSO proxy says is signed in. */
+const [hostedSignOut, setHostedSignOut] = createSignal(false);
+/** Hosted mode: who is signed in (built-in sign-in or the SSO proxy). */
 export { hostedUser };
+/** Hosted mode: the server signs users in itself, so offer Sign out. */
+export { hostedSignOut };
 /** The API keys screen is available (always on desktop; hosted servers opt in). */
 export { keyManagement };
 
@@ -142,6 +145,7 @@ export async function loadConnections() {
   try {
     const cfg = await loadHostedConfig();
     setHostedUser(cfg.user);
+    setHostedSignOut(cfg.signOut);
     setKeyManagement(cfg.keyManagement);
     state.setConnections(cfg.servers.map((s) => ({ id: s.id, name: s.name, color: s.color, url: hostedServerUrl(s.id), hasKey: false })));
     if (cfg.servers.length === 1) connect(cfg.servers[0].id);

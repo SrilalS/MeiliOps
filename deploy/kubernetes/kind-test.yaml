@@ -114,6 +114,10 @@ spec:
             - { name: MEILIOPS_SERVER_OLDEST_NAME, value: "Meilisearch 1.18" }
             - name: MEILIOPS_SERVER_OLDEST_KEY
               valueFrom: { secretKeyRef: { name: meili-keys, key: oldest } }
+            # Served under /meiliops, as behind a shared Gateway. Sign-in is off here: kind has no
+            # identity provider. docs/guide/hosted.md shows how to test it with a mock provider.
+            - { name: MEILIOPS_PUBLIC_PATH, value: "/meiliops" }
+            - { name: MEILIOPS_AUDIT, value: "all" }
           readinessProbe:
             httpGet: { path: /healthz, port: http }
           resources:
@@ -132,4 +136,4 @@ metadata:
 spec:
   selector: { app: meiliops }
   ports:
-    - { name: http, port: 80, targetPort: http }
+    - { name: http, port: 8080, targetPort: http }
