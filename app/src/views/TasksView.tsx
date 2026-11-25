@@ -6,6 +6,7 @@ import JsonEditor from "../components/JsonEditor";
 import { Confirm, StatusPill, formatDate, formatNumber, pretty } from "../components/ui";
 import { liveSse, streamSse } from "../lib/sse";
 import { IconRefresh, IconX } from "../components/icons";
+import { needs, supports } from "../lib/compat";
 
 const STATUSES = ["enqueued", "processing", "succeeded", "failed", "canceled"];
 
@@ -59,8 +60,9 @@ export default function TasksView() {
 
   onMount(load);
 
-  // Live updates: SSE stream when the server enables it, polling otherwise.
-  const [mode, setMode] = createSignal<"stream" | "polling">("stream");
+  // Live updates: SSE stream when the server has it (1.52+) and enables it, polling otherwise.
+  const canStream = supports("GET /tasks/stream");
+  const [mode, setMode] = createSignal<"stream" | "polling">(canStream ? "stream" : "polling");
   const matches = (t: Task) =>
     (!status() || status().split(",").includes(t.status)) && (!type() || type().split(",").map((s) => s.trim()).includes(t.type)) && (!index() || t.indexUid === index());
   const upsert = (t: Task) => {
@@ -78,10 +80,12 @@ export default function TasksView() {
       return [t, ...list];
     });
   };
-  const stop = liveSse(
-    (signal) => streamSse(api(), "GET", "/tasks/stream", { onData: (d) => upsert(JSON.parse(d)) }, { signal }),
-    () => setMode("polling"),
-  );
+  const stop = canStream
+    ? liveSse(
+        (signal) => streamSse(api(), "GET", "/tasks/stream", { onData: (d) => upsert(JSON.parse(d)) }, { signal }),
+        () => setMode("polling"),
+      )
+    : () => {};
   const timer = setInterval(() => online() && mode() === "polling" && auto() && !loadingMore && tasks().length <= 200 && load(), 2000);
   onCleanup(() => {
     stop();
@@ -151,7 +155,7 @@ export default function TasksView() {
           ))}
         </select>
         <span class="grow" />
-        <button onClick={() => setConfirm("compact")} title="Experimental: taskQueueCompactionRoute">
+        <button disabled={!!needs("POST /tasks/compact")} onClick={() => setConfirm("compact")} title={needs("POST /tasks/compact") ?? "Experimental: taskQueueCompactionRoute"}>
           Compact queue…
         </button>
         <button onClick={() => setConfirm("cancel")}>Cancel matching…</button>

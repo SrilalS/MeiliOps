@@ -25,10 +25,18 @@ function walk(dir) {
 }
 
 const covered = new Set();
+const calls = []; // { op, file } for the version-gate check
+const gates = []; // { op, file }: ops passed to missing/supports/needs or an `op` prop
+let settingsGated = false;
 for (const file of walk(join(root, "src"))) {
   const src = readFileSync(file, "utf8");
   // Any `"METHOD", "/path"` literal pair: req(...), streamSse(m, "GET", "/tasks/stream"), etc.
-  for (const m of src.matchAll(/"(GET|POST|PUT|PATCH|DELETE)",\s*"(\/[^"]*)"/g)) covered.add(`${m[1]} ${m[2]}`);
+  for (const m of src.matchAll(/"(GET|POST|PUT|PATCH|DELETE)",\s*"(\/[^"]*)"/g)) {
+    covered.add(`${m[1]} ${m[2]}`);
+    calls.push({ op: `${m[1]} ${m[2]}`, file });
+  }
+  for (const m of src.matchAll(/(?:\b(?:missing|supports|needs)\(\s*|\bop[=:]\s*)"((?:GET|POST|PUT|PATCH|DELETE) \/[^"]*)"/g)) gates.push({ op: m[1], file });
+  if (/settingMissing\(/.test(src)) settingsGated = true;
   for (const m of src.matchAll(/setting\(\s*"[^"]+",\s*"(PUT|PATCH)",\s*"([a-z-]+)"/g)) {
     const p = `/indexes/{index_uid}/settings/${m[2]}`;
     ["GET", m[1], "DELETE"].forEach((verb) => covered.add(`${verb} ${p}`));
@@ -66,4 +74,24 @@ if (unknown.length) {
   console.log(`\n⚠ Calls to routes NOT in the spec (renamed/removed upstream?):`);
   unknown.forEach((u) => console.log(`    ${u}`));
 }
-if (process.argv.includes("--strict") && (missing.some((o) => !o.experimental && !o.enterprise) || unknown.length)) process.exit(1);
+
+// Version gates: every call to an operation newer than the minimum supported
+// Meilisearch version must be gated (src/lib/compat.ts) in the same file: a
+// gate on that operation, or on one at least as new (a whole-screen <Requires>).
+// Settings sub-routes are gated by SettingsTab through settingMissing().
+const since = JSON.parse(readFileSync(join(root, "src/api/since.json"), "utf8"));
+const minor = (v) => Number(v.split(".")[1]);
+const stale = since.latest !== spec.info.version;
+const ungated = [
+  ...new Set(
+    calls
+      .filter(({ op }) => since.ops[op] && !(settingsGated && /\/settings\/[a-z-]+$/.test(op)))
+      .filter(({ op, file }) => !gates.some((g) => g.file === file && since.ops[g.op] && minor(since.ops[g.op]) >= minor(since.ops[op])))
+      .map(({ op }) => op),
+  ),
+];
+console.log(`\nMinimum Meilisearch ${since.min}: ${Object.keys(since.ops).length} newer operations, ${ungated.length} called without a version gate`);
+if (stale) console.log(`⚠ src/api/since.json is for ${since.latest}, the spec is ${spec.info.version}: run npm run gen`);
+ungated.forEach((o) => console.log(`    ${o}  (needs ${since.ops[o]})`));
+
+if (process.argv.includes("--strict") && (missing.some((o) => !o.experimental && !o.enterprise) || unknown.length || stale || ungated.length)) process.exit(1);

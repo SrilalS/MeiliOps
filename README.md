@@ -81,7 +81,7 @@ From 0.4 on, MeiliOps updates itself: an **Update** button appears in the title 
 > [!NOTE]
 > Builds aren't code-signed yet. On Windows, choose **More info → Run anyway** in the SmartScreen prompt; on macOS, right-click the app and choose **Open** the first time. [More help](https://srilals.github.io/MeiliOps/guide/troubleshooting).
 
-MeiliOps supports the **latest stable Meilisearch** (currently 1.58).
+MeiliOps supports **Meilisearch 1.18 and newer**, with full coverage of the latest stable release (currently 1.58). Features a server is too old for are marked with the version they need.
 
 ## Development
 

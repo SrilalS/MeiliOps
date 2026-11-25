@@ -5,6 +5,7 @@ import JsonEditor from "../components/JsonEditor";
 import { formatDate, formatNumber, pretty } from "../components/ui";
 import { liveSse, streamSse } from "../lib/sse";
 import { IconRefresh, IconX } from "../components/icons";
+import { supports } from "../lib/compat";
 
 interface Batch {
   uid: number;
@@ -47,7 +48,9 @@ export default function BatchesView() {
     }
   };
   onMount(load);
-  const [mode, setMode] = createSignal<"stream" | "polling">("stream");
+  // SSE stream when the server has it (1.52+) and enables it, polling otherwise.
+  const canStream = supports("GET /batches/stream");
+  const [mode, setMode] = createSignal<"stream" | "polling">(canStream ? "stream" : "polling");
   const upsert = (b: Batch) => {
     setBatches((list) => {
       const i = list.findIndex((x) => x.uid === b.uid);
@@ -58,10 +61,12 @@ export default function BatchesView() {
     });
     if (detail()?.uid === b.uid) setDetail(b);
   };
-  const stop = liveSse(
-    (signal) => streamSse(api(), "GET", "/batches/stream", { onData: (d) => upsert(JSON.parse(d)) }, { signal }),
-    () => setMode("polling"),
-  );
+  const stop = canStream
+    ? liveSse(
+        (signal) => streamSse(api(), "GET", "/batches/stream", { onData: (d) => upsert(JSON.parse(d)) }, { signal }),
+        () => setMode("polling"),
+      )
+    : () => {};
   const timer = setInterval(() => online() && mode() === "polling" && batches().length <= 200 && load(), 3000);
   onCleanup(() => {
     stop();

@@ -10,7 +10,7 @@
     "serve": "vite preview",
     "tauri": "tauri",
     "build:unsigned": "tauri build --config src-tauri/tauri.unsigned.conf.json",
-    "gen": "node scripts/gen-ops.mjs",
+    "gen": "node scripts/gen-ops.mjs && node scripts/gen-since.mjs",
     "coverage": "node scripts/coverage.mjs",
     "typecheck": "tsc --noEmit"
   },

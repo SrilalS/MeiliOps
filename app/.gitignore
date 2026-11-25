@@ -1,2 +1,4 @@
 node_modules
 dist
+# Per-release OpenAPI specs downloaded by scripts/gen-since.mjs
+spec/history/

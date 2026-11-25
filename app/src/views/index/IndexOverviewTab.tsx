@@ -1,6 +1,8 @@
 import { For, Show, createResource, createSignal } from "solid-js";
 import { api, indexes, refreshIndexes, setView, trackTask } from "../../state/app";
 import { Confirm, Modal, Spinner, Stat, formatBytes, formatDate, formatNumber } from "../../components/ui";
+import { needs } from "../../lib/compat";
+import { FieldCaps, loadFieldCaps } from "../../lib/fieldCaps";
 
 interface IndexStats {
   numberOfDocuments: number;
@@ -14,19 +16,11 @@ interface IndexStats {
   fieldDistribution: Record<string, number>;
 }
 
-interface FieldInfo {
-  name: string;
-  [k: string]: unknown;
-}
-
 export default function IndexOverviewTab(props: { uid: string }) {
   const info = () => indexes().find((i) => i.uid === props.uid);
   const [stats, { refetch }] = createResource(() => api().req<IndexStats>("GET", "/indexes/{index_uid}/stats", { path: { index_uid: props.uid } }));
-  const [fields] = createResource(() =>
-    api()
-      .req<{ results: FieldInfo[]; total: number }>("POST", "/indexes/{index_uid}/fields", { path: { index_uid: props.uid }, body: { offset: 0, limit: 1000 } })
-      .catch(() => undefined),
-  );
+  // From /fields on 1.36+, from the settings before that.
+  const [fields] = createResource(() => loadFieldCaps(api(), props.uid).catch(() => undefined));
   const [dialog, setDialog] = createSignal<"rename" | "pk" | "delete" | "swap" | "compact">();
   const [input, setInput] = createSignal("");
 
@@ -64,7 +58,9 @@ export default function IndexOverviewTab(props: { uid: string }) {
         >
           Swap with…
         </button>
-        <button onClick={() => setDialog("compact")}>Compact</button>
+        <button disabled={!!needs("POST /indexes/{index_uid}/compact")} title={needs("POST /indexes/{index_uid}/compact")} onClick={() => setDialog("compact")}>
+          Compact
+        </button>
         <span class="grow" />
         <button class="danger" onClick={() => setDialog("delete")}>
           Delete index
@@ -99,7 +95,7 @@ export default function IndexOverviewTab(props: { uid: string }) {
         <tbody>
           <For each={Object.entries(stats()?.fieldDistribution ?? {}).sort((a, b) => b[1] - a[1])}>
             {([name, count]) => {
-              const f = () => fields()?.results.find((x) => x.name === name);
+              const f = () => fields()?.get(name);
               return (
                 <tr>
                   <td>
@@ -219,7 +215,7 @@ export default function IndexOverviewTab(props: { uid: string }) {
   );
 }
 
-function capabilities(f: FieldInfo): string {
+function capabilities(f: FieldCaps): string {
   const flags: string[] = [];
   for (const [k, v] of Object.entries(f)) {
     if (k === "name") continue;

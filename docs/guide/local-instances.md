@@ -18,7 +18,7 @@ Each instance picks a **Meilisearch version** and where it **runs**:
 
 Pick a release in the **Native versions** card and click **Install**. MeiliOps:
 
-1. Lists Meilisearch releases from GitHub (tick **pre-releases** to include release candidates).
+1. Lists Meilisearch releases from GitHub, from 1.18 (the oldest version MeiliOps supports) up. Tick **pre-releases** to include release candidates.
 2. Downloads the official **Community Edition** binary for your platform.
 3. Verifies its **SHA-256** against the digest GitHub publishes for the release, and refuses it on mismatch.
 4. Installs it next to the others, in `bin/<version>` in the app's data folder (on Windows: `%LOCALAPPDATA%\io.meiliops.app\bin`).

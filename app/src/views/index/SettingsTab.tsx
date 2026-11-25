@@ -2,7 +2,8 @@ import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 import { ApiPath } from "../../api/meili";
 import { api, notify, trackTask } from "../../state/app";
 import JsonEditor from "../../components/JsonEditor";
-import { ApiError, Confirm, Spinner, pretty } from "../../components/ui";
+import { ApiError, Confirm, Empty, Spinner, pretty } from "../../components/ui";
+import { needs, serverVersion, settingMissing, shortVersion } from "../../lib/compat";
 import { SETTINGS, SettingDef } from "./settingsCatalog";
 import RenderTemplateDialog from "./RenderTemplateDialog";
 
@@ -17,8 +18,11 @@ export default function SettingsTab(props: { uid: string }) {
 
   const path = (s: SettingDef) => (s.key === "*" ? "/indexes/{index_uid}/settings" : `/indexes/{index_uid}/settings/${s.slug}`) as ApiPath;
 
+  // A setting newer than the server: its sub-route doesn't exist there.
+  const tooNew = () => (current().key === "*" ? undefined : settingMissing(current().slug));
+
   // Each setting is fetched through its own sub-route so every GET is exercised.
-  const [server, { refetch }] = createResource(current, async (s) => {
+  const [server, { refetch }] = createResource(() => !tooNew() && current(), async (s) => {
     const v = await api().req("GET", path(s), { path: { index_uid: props.uid } });
     setText(pretty(v));
     return pretty(v);
@@ -76,6 +80,13 @@ export default function SettingsTab(props: { uid: string }) {
                     <Show when={s.experimental}>
                       <span class="pill exp">exp</span>
                     </Show>
+                    <Show when={settingMissing(s.slug)}>
+                      {(v) => (
+                        <span class="pill" title={`Requires Meilisearch ${shortVersion(v())} or newer`}>
+                          {shortVersion(v())}+
+                        </span>
+                      )}
+                    </Show>
                   </div>
                 )}
               </For>
@@ -95,14 +106,21 @@ export default function SettingsTab(props: { uid: string }) {
             </Show>
           </div>
         </div>
-        <Show when={!server.loading || server()} fallback={<Spinner />}>
+        <Show when={tooNew()}>
+          {(v) => (
+            <Empty title={`${current().label} needs Meilisearch ${shortVersion(v())} or newer`}>
+              <p>This server runs {serverVersion()}. Upgrade Meilisearch to use this setting.</p>
+            </Empty>
+          )}
+        </Show>
+        <Show when={!tooNew() && (!server.loading || server())} fallback={<Show when={!tooNew()}><Spinner /></Show>}>
           <Show when={!server.error} fallback={<ApiError error={server.error} />}>
             <div class="editor-box fill">
               <JsonEditor value={text()} onChange={setText} original={server()} onSubmit={apply} />
             </div>
           </Show>
         </Show>
-        <div class="row">
+        <div class="row" style={{ display: tooNew() ? "none" : undefined }}>
           <button class="primary" disabled={!dirty() || busy()} onClick={apply} title="Ctrl+Enter">
             {busy() ? "Applying…" : "Apply changes"}
           </button>
@@ -114,7 +132,9 @@ export default function SettingsTab(props: { uid: string }) {
             <span class="warn small">Unsaved changes (highlighted)</span>
           </Show>
           <Show when={current().key === "embedders" || current().key === "chat"}>
-            <button onClick={() => setTemplateTest(true)}>Test template…</button>
+            <button disabled={!!needs("POST /render-template")} title={needs("POST /render-template")} onClick={() => setTemplateTest(true)}>
+              Test template…
+            </button>
           </Show>
           <button class="danger" onClick={() => setConfirm(current().key === "*" ? "reset-all" : "reset")}>
             {current().key === "*" ? "Reset ALL settings" : "Reset to default"}
