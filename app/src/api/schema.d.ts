@@ -255,6 +255,26 @@ export interface paths {
         patch: operations["update_or_create_rule"];
         trace?: never;
     };
+    "/dynamic-search-rules/{uid}/target": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * View the target state of a dynamic search rule
+         * @description Retrieve a single search rule by its unique identifier, as it will be after all pending tasks have been processed.
+         */
+        get: operations["get_target_rule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/experimental-features": {
         parameters: {
             query?: never;
@@ -1305,6 +1325,34 @@ export interface paths {
          * @description Updates the `typoTolerance` setting for the index.
          */
         patch: operations["patchtypoTolerance"];
+        trace?: never;
+    };
+    "/indexes/{index_uid}/settings/word-position": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get wordPosition
+         * @description Returns the current value of the `wordPosition` setting for the index.
+         */
+        get: operations["getwordPosition"];
+        put?: never;
+        post?: never;
+        /**
+         * Reset wordPosition
+         * @description Resets the `wordPosition` setting to its default value.
+         */
+        delete: operations["deletewordPosition"];
+        options?: never;
+        head?: never;
+        /**
+         * Update wordPosition
+         * @description Updates the `wordPosition` setting for the index.
+         */
+        patch: operations["patchwordPosition"];
         trace?: never;
     };
     "/indexes/{index_uid}/similar": {
@@ -2532,7 +2580,7 @@ export interface components {
             version: string;
         };
         /** @enum {string} */
-        Code: "api_key_already_exists" | "api_key_not_found" | "index_scoped_api_key_with_global_action" | "bad_parameter" | "bad_request" | "database_size_limit_reached" | "document_not_found" | "dump_already_processing" | "dump_not_found" | "dump_process_failed" | "duplicate_index_found" | "immutable_api_key_actions" | "immutable_api_key_created_at" | "immutable_api_key_expires_at" | "immutable_api_key_indexes" | "immutable_api_key_key" | "immutable_api_key_uid" | "immutable_api_key_updated_at" | "immutable_index_created_at" | "immutable_index_updated_at" | "import_task_already_received" | "import_task_unknown_remote" | "receive_import_finished_unknown_remote" | "import_task_without_network_task" | "index_already_exists" | "index_creation_failed" | "index_not_found" | "index_primary_key_already_exists" | "index_primary_key_multiple_candidates_found" | "index_primary_key_no_candidate_found" | "internal" | "invalid_api_key" | "invalid_api_key_actions" | "invalid_api_key_description" | "invalid_api_key_expires_at" | "invalid_api_key_indexes" | "invalid_api_key_limit" | "invalid_api_key_name" | "invalid_api_key_offset" | "invalid_api_key_uid" | "invalid_content_type" | "invalid_document_csv_delimiter" | "invalid_document_fields" | "invalid_document_retrieve_vectors" | "missing_document_filter" | "missing_document_edition_function" | "inconsistent_document_change_headers" | "invalid_document_filter" | "invalid_document_sort" | "invalid_document_use_network" | "invalid_document_retrieve" | "invalid_document_geo_field" | "invalid_document_geojson_field" | "invalid_header_value" | "invalid_vector_dimensions" | "invalid_vectors_type" | "invalid_document_id" | "invalid_document_ids" | "invalid_document_limit" | "invalid_document_offset" | "invalid_search_embedder" | "invalid_similar_embedder" | "invalid_search_hybrid_query" | "invalid_index_limit" | "invalid_index_offset" | "invalid_index_primary_key" | "invalid_index_custom_metadata" | "invalid_skip_creation" | "invalid_index_uid" | "invalid_multi_search_facets" | "invalid_multi_search_facets_by_index" | "invalid_multi_search_facet_order" | "invalid_multi_search_query_personalization" | "invalid_multi_search_query_show_performance_details" | "invalid_multi_search_federated" | "invalid_multi_search_federation_options" | "invalid_multi_search_max_values_per_facet" | "invalid_multi_search_merge_facets" | "invalid_multi_search_query_facets" | "invalid_multi_search_distinct" | "invalid_multi_search_query_pagination" | "invalid_multi_search_query_ranking_rules" | "invalid_multi_search_query_position" | "invalid_multi_search_remote" | "invalid_multi_search_weight" | "invalid_network_leader" | "invalid_network_remotes" | "invalid_network_shards" | "invalid_network_self" | "invalid_network_search_api_key" | "invalid_network_write_api_key" | "invalid_network_url" | "invalid_search_attributes_to_search_on" | "invalid_search_attributes_to_crop" | "invalid_search_attributes_to_highlight" | "invalid_similar_attributes_to_retrieve" | "invalid_similar_retrieve_vectors" | "invalid_search_attributes_to_retrieve" | "invalid_search_ranking_score_threshold" | "invalid_similar_ranking_score_threshold" | "invalid_search_retrieve_vectors" | "invalid_search_crop_length" | "invalid_search_crop_marker" | "invalid_search_facets" | "invalid_search_semantic_ratio" | "invalid_search_locales" | "invalid_facet_search_exhaustive_facet_count" | "invalid_facet_search_facet_name" | "invalid_similar_id" | "invalid_search_filter" | "invalid_similar_filter" | "invalid_search_highlight_post_tag" | "invalid_search_highlight_pre_tag" | "invalid_search_hits_per_page" | "invalid_similar_limit" | "invalid_search_limit" | "invalid_search_matching_strategy" | "invalid_similar_offset" | "invalid_search_offset" | "invalid_search_page" | "invalid_search_q" | "invalid_facet_search_query" | "invalid_facet_search_name" | "facet_search_disabled" | "invalid_search_vector" | "invalid_search_media" | "invalid_search_show_matches_position" | "invalid_search_show_ranking_score" | "invalid_similar_show_ranking_score" | "invalid_search_show_ranking_score_details" | "invalid_search_show_performance_details" | "invalid_search_use_network" | "invalid_similar_show_ranking_score_details" | "invalid_similar_show_performance_details" | "invalid_search_sort" | "invalid_search_distinct" | "invalid_search_personalize" | "invalid_search_personalize_user_context" | "invalid_search_media_and_vector" | "invalid_settings_displayed_attributes" | "invalid_settings_distinct_attribute" | "invalid_settings_proximity_precision" | "invalid_settings_facet_search" | "invalid_settings_prefix_search" | "invalid_settings_faceting" | "invalid_settings_filterable_attributes" | "invalid_settings_foreign_keys" | "invalid_settings_pagination" | "invalid_settings_search_cutoff_ms" | "invalid_settings_embedders" | "invalid_settings_ranking_rules" | "invalid_settings_searchable_attributes" | "invalid_settings_sortable_attributes" | "invalid_settings_stop_words" | "invalid_settings_non_separator_tokens" | "invalid_settings_separator_tokens" | "invalid_settings_dictionary" | "invalid_settings_synonyms" | "invalid_settings_typo_tolerance" | "invalid_settings_localized_attributes" | "invalid_state" | "invalid_stats_show_internal_database_sizes" | "invalid_stats_size_format" | "invalid_store_file" | "invalid_swap_duplicate_index_found" | "invalid_swap_indexes" | "invalid_swap_rename" | "invalid_task_after_enqueued_at" | "invalid_task_after_finished_at" | "invalid_task_after_started_at" | "invalid_task_before_enqueued_at" | "invalid_task_before_finished_at" | "invalid_task_before_started_at" | "invalid_task_canceled_by" | "invalid_task_from" | "invalid_task_limit" | "invalid_task_reverse" | "invalid_task_statuses" | "invalid_task_types" | "invalid_task_uids" | "invalid_batch_uids" | "io_error" | "feature_not_enabled" | "malformed_payload" | "max_fields_limit_exceeded" | "missing_api_key_actions" | "missing_api_key_expires_at" | "missing_api_key_indexes" | "missing_authorization_header" | "missing_content_type" | "missing_document_id" | "missing_facet_search_facet_name" | "missing_index_uid" | "missing_master_key" | "missing_network_url" | "missing_payload" | "missing_search_hybrid" | "missing_swap_indexes" | "missing_task_filters" | "network_version_mismatch" | "no_space_left_on_device" | "not_leader" | "payload_too_large" | "remote_bad_response" | "remote_bad_request" | "unknown_remote" | "remote_could_not_send_request" | "remote_invalid_api_key" | "remote_remote_error" | "remote_timeout" | "too_many_search_requests" | "task_not_found" | "task_file_not_found" | "batch_not_found" | "too_many_open_files" | "too_many_vectors" | "unexpected_network_previous_remotes" | "network_version_too_old" | "unprocessed_network_task" | "unretrievable_document" | "unretrievable_error_code" | "unsupported_media_type" | "invalid_s3_snapshot_request" | "invalid_s3_snapshot_parameters" | "s3_snapshot_server_error" | "vector_embedding_error" | "not_found_similar_id" | "invalid_document_edition_context" | "invalid_document_edition_function_filter" | "edit_documents_by_function_error" | "invalid_settings_index_chat" | "invalid_export_url" | "invalid_export_api_key" | "invalid_export_payload_size" | "invalid_export_indexes_patterns" | "invalid_export_index_filter" | "invalid_export_index_override_settings" | "unimplemented_external_function_calling" | "unimplemented_non_streaming_chat_completions" | "unimplemented_multi_choice_chat_completions" | "chat_not_found" | "invalid_chat_setting_document_template" | "invalid_chat_completion_org_id" | "invalid_chat_completion_project_id" | "invalid_chat_completion_api_version" | "invalid_chat_completion_deployment_id" | "invalid_chat_completion_source" | "invalid_chat_completion_base_api" | "invalid_chat_completion_api_key" | "invalid_chat_completion_prompts" | "invalid_chat_completion_system_prompt" | "invalid_chat_completion_search_description_prompt" | "invalid_chat_completion_search_query_param_prompt" | "invalid_chat_completion_search_filter_param_prompt" | "invalid_chat_completion_search_index_uid_param_prompt" | "invalid_chat_completion_pre_query_prompt" | "invalid_index_fields_filter" | "invalid_index_fields_filter_attribute_patterns" | "invalid_index_fields_filter_displayed" | "invalid_index_fields_filter_searchable" | "invalid_index_fields_filter_sortable" | "invalid_index_fields_filter_distinct" | "invalid_index_fields_filter_ranking_rule" | "invalid_index_fields_filter_filterable" | "requires_enterprise_edition" | "invalid_render_template" | "invalid_render_input" | "render_document_not_found" | "template_parsing_error" | "template_rendering_error" | "invalid_webhooks" | "invalid_webhook_url" | "invalid_webhook_headers" | "immutable_webhook" | "invalid_webhook_uuid" | "webhook_not_found" | "immutable_webhook_uuid" | "immutable_webhook_is_editable" | "invalid_dynamic_search_rule_uid" | "invalid_dynamic_search_rule_offset" | "invalid_dynamic_search_rule_limit" | "invalid_dynamic_search_rule_filter" | "invalid_dynamic_search_rule_description" | "invalid_dynamic_search_rule_priority" | "invalid_dynamic_search_rule_active" | "invalid_dynamic_search_rule_conditions" | "invalid_dynamic_search_rule_actions" | "invalid_dynamic_search_rule_filter_query" | "invalid_dynamic_search_rule_filter_active" | "dynamic_search_rule_not_found";
+        Code: "api_key_already_exists" | "api_key_not_found" | "index_scoped_api_key_with_global_action" | "bad_parameter" | "bad_request" | "database_size_limit_reached" | "document_not_found" | "dump_already_processing" | "dump_not_found" | "dump_process_failed" | "duplicate_index_found" | "immutable_api_key_actions" | "immutable_api_key_created_at" | "immutable_api_key_expires_at" | "immutable_api_key_indexes" | "immutable_api_key_key" | "immutable_api_key_uid" | "immutable_api_key_updated_at" | "immutable_index_created_at" | "immutable_index_updated_at" | "import_task_already_received" | "import_task_unknown_remote" | "receive_import_finished_unknown_remote" | "import_task_without_network_task" | "index_already_exists" | "index_creation_failed" | "index_not_found" | "index_primary_key_already_exists" | "index_primary_key_multiple_candidates_found" | "index_primary_key_no_candidate_found" | "internal" | "invalid_api_key" | "invalid_api_key_actions" | "invalid_api_key_description" | "invalid_api_key_expires_at" | "invalid_api_key_indexes" | "invalid_api_key_limit" | "invalid_api_key_name" | "invalid_api_key_offset" | "invalid_api_key_uid" | "invalid_content_type" | "invalid_document_csv_delimiter" | "invalid_document_fields" | "invalid_document_retrieve_vectors" | "missing_document_filter" | "missing_document_edition_function" | "inconsistent_document_change_headers" | "invalid_document_filter" | "invalid_document_sort" | "invalid_document_use_network" | "invalid_document_retrieve" | "invalid_document_geo_field" | "unsupported_setting_for_legacy_indexer" | "invalid_document_geojson_field" | "invalid_header_value" | "invalid_vector_dimensions" | "invalid_vectors_type" | "invalid_document_id" | "invalid_document_ids" | "invalid_document_limit" | "invalid_document_offset" | "invalid_search_embedder" | "invalid_similar_embedder" | "invalid_search_hybrid_query" | "invalid_index_limit" | "invalid_index_offset" | "invalid_index_primary_key" | "invalid_index_custom_metadata" | "invalid_skip_creation" | "invalid_index_uid" | "invalid_multi_search_facets" | "invalid_multi_search_facets_by_index" | "invalid_multi_search_facet_order" | "invalid_multi_search_query_personalization" | "invalid_multi_search_query_show_performance_details" | "invalid_multi_search_federated" | "invalid_multi_search_federation_options" | "invalid_multi_search_max_values_per_facet" | "invalid_multi_search_merge_facets" | "invalid_multi_search_query_facets" | "invalid_multi_search_distinct" | "invalid_multi_search_query_pagination" | "invalid_multi_search_query_ranking_rules" | "invalid_multi_search_query_position" | "invalid_multi_search_remote" | "invalid_multi_search_weight" | "invalid_network_leader" | "invalid_network_remotes" | "invalid_network_shards" | "invalid_network_self" | "invalid_network_search_api_key" | "invalid_network_write_api_key" | "invalid_network_url" | "invalid_search_attributes_to_search_on" | "invalid_search_attributes_to_crop" | "invalid_search_attributes_to_highlight" | "invalid_similar_attributes_to_retrieve" | "invalid_similar_retrieve_vectors" | "invalid_search_attributes_to_retrieve" | "invalid_search_ranking_score_threshold" | "invalid_similar_ranking_score_threshold" | "invalid_search_retrieve_vectors" | "invalid_search_crop_length" | "invalid_search_crop_marker" | "invalid_search_facets" | "invalid_search_semantic_ratio" | "invalid_search_locales" | "invalid_facet_search_exhaustive_facet_count" | "invalid_facet_search_facet_name" | "invalid_similar_id" | "invalid_search_filter" | "invalid_similar_filter" | "invalid_search_highlight_post_tag" | "invalid_search_highlight_pre_tag" | "invalid_search_hits_per_page" | "invalid_similar_limit" | "invalid_search_limit" | "invalid_search_matching_strategy" | "invalid_similar_offset" | "invalid_search_offset" | "invalid_search_page" | "invalid_search_q" | "invalid_facet_search_query" | "invalid_facet_search_name" | "facet_search_disabled" | "invalid_search_vector" | "invalid_search_media" | "invalid_search_show_matches_position" | "invalid_search_show_ranking_score" | "invalid_similar_show_ranking_score" | "invalid_search_show_ranking_score_details" | "invalid_search_show_performance_details" | "invalid_search_use_network" | "invalid_similar_show_ranking_score_details" | "invalid_similar_show_performance_details" | "invalid_search_sort" | "invalid_search_distinct" | "invalid_search_personalize" | "invalid_search_personalize_user_context" | "invalid_search_media_and_vector" | "invalid_settings_displayed_attributes" | "invalid_settings_distinct_attribute" | "invalid_settings_proximity_precision" | "invalid_settings_facet_search" | "invalid_settings_prefix_search" | "invalid_settings_faceting" | "invalid_settings_filterable_attributes" | "invalid_settings_foreign_keys" | "invalid_settings_pagination" | "invalid_settings_search_cutoff_ms" | "invalid_settings_embedders" | "invalid_settings_ranking_rules" | "invalid_settings_searchable_attributes" | "invalid_settings_sortable_attributes" | "invalid_settings_stop_words" | "invalid_settings_non_separator_tokens" | "invalid_settings_separator_tokens" | "invalid_settings_dictionary" | "invalid_settings_synonyms" | "invalid_settings_typo_tolerance" | "invalid_settings_word_position" | "invalid_settings_localized_attributes" | "invalid_state" | "invalid_stats_show_internal_database_sizes" | "invalid_stats_size_format" | "invalid_store_file" | "invalid_swap_duplicate_index_found" | "invalid_swap_indexes" | "invalid_swap_rename" | "invalid_task_after_enqueued_at" | "invalid_task_after_finished_at" | "invalid_task_after_started_at" | "invalid_task_before_enqueued_at" | "invalid_task_before_finished_at" | "invalid_task_before_started_at" | "invalid_task_canceled_by" | "invalid_task_from" | "invalid_task_limit" | "invalid_task_reverse" | "invalid_task_statuses" | "invalid_task_types" | "invalid_task_uids" | "invalid_batch_uids" | "io_error" | "feature_not_enabled" | "malformed_payload" | "max_fields_limit_exceeded" | "missing_api_key_actions" | "missing_api_key_expires_at" | "missing_api_key_indexes" | "missing_authorization_header" | "missing_content_type" | "missing_document_id" | "missing_facet_search_facet_name" | "missing_index_uid" | "missing_master_key" | "missing_network_url" | "missing_payload" | "missing_search_hybrid" | "missing_swap_indexes" | "missing_task_filters" | "network_version_mismatch" | "no_space_left_on_device" | "not_leader" | "payload_too_large" | "remote_bad_response" | "remote_bad_request" | "unknown_remote" | "remote_could_not_send_request" | "remote_invalid_api_key" | "remote_remote_error" | "remote_timeout" | "too_many_search_requests" | "task_not_found" | "task_file_not_found" | "batch_not_found" | "too_many_open_files" | "too_many_vectors" | "unexpected_network_previous_remotes" | "network_version_too_old" | "unprocessed_network_task" | "unretrievable_document" | "unretrievable_error_code" | "unsupported_media_type" | "invalid_s3_snapshot_request" | "invalid_s3_snapshot_parameters" | "s3_snapshot_server_error" | "vector_embedding_error" | "not_found_similar_id" | "invalid_document_edition_context" | "invalid_document_edition_function_filter" | "edit_documents_by_function_error" | "invalid_settings_index_chat" | "invalid_export_url" | "invalid_export_api_key" | "invalid_export_payload_size" | "invalid_export_indexes_patterns" | "invalid_export_index_filter" | "invalid_export_index_override_settings" | "unimplemented_external_function_calling" | "unimplemented_non_streaming_chat_completions" | "unimplemented_multi_choice_chat_completions" | "chat_not_found" | "invalid_chat_setting_document_template" | "invalid_chat_completion_org_id" | "invalid_chat_completion_project_id" | "invalid_chat_completion_api_version" | "invalid_chat_completion_deployment_id" | "invalid_chat_completion_source" | "invalid_chat_completion_base_api" | "invalid_chat_completion_api_key" | "invalid_chat_completion_prompts" | "invalid_chat_completion_system_prompt" | "invalid_chat_completion_search_description_prompt" | "invalid_chat_completion_search_query_param_prompt" | "invalid_chat_completion_search_filter_param_prompt" | "invalid_chat_completion_search_index_uid_param_prompt" | "invalid_chat_completion_pre_query_prompt" | "invalid_index_fields_filter" | "invalid_index_fields_filter_attribute_patterns" | "invalid_index_fields_filter_displayed" | "invalid_index_fields_filter_searchable" | "invalid_index_fields_filter_sortable" | "invalid_index_fields_filter_distinct" | "invalid_index_fields_filter_ranking_rule" | "invalid_index_fields_filter_filterable" | "requires_enterprise_edition" | "invalid_render_template" | "invalid_render_input" | "render_document_not_found" | "template_parsing_error" | "template_rendering_error" | "invalid_webhooks" | "invalid_webhook_url" | "invalid_webhook_headers" | "immutable_webhook" | "invalid_webhook_uuid" | "webhook_not_found" | "immutable_webhook_uuid" | "immutable_webhook_is_editable" | "invalid_dynamic_search_rule_uid" | "invalid_dynamic_search_rule_offset" | "invalid_dynamic_search_rule_limit" | "invalid_dynamic_search_rule_filter" | "invalid_dynamic_search_rule_show_target" | "invalid_dynamic_search_rule_description" | "invalid_dynamic_search_rule_priority" | "invalid_dynamic_search_rule_active" | "invalid_dynamic_search_rule_conditions" | "invalid_dynamic_search_rule_actions" | "invalid_dynamic_search_rule_filter_query" | "invalid_dynamic_search_rule_filter_active" | "dynamic_search_rule_not_found";
         /** @description Breakdown of tokens used in a completion. */
         CompletionTokensDetails: {
             /** Format: u-int32 */
@@ -3079,6 +3127,22 @@ export interface components {
             /** @description Actions to apply when the dynamic search rule matches. */
             actions?: components["schemas"]["RuleActions"];
         };
+        DynamicSearchRuleNeedsProcessing: components["schemas"]["DynamicSearchRule"] & {
+            /**
+             * @description Whether the rule has at least one pending update task.
+             *
+             *     Returned when `showTarget` is present and set to `true` in the request.
+             */
+            needsProcessing?: boolean | null;
+        };
+        DynamicSearchRuleTarget: {
+            current?: null | components["schemas"]["DynamicSearchRuleUpdateRequest"];
+            target?: null | components["schemas"]["DynamicSearchRuleUpdateRequest"];
+            /** @description List of the uids of the pending tasks that will update this DSR. */
+            taskUids: components["schemas"]["u32"][];
+            /** @description Set to `true` if there is at least one task that will update this DSR. */
+            needsProcessing: boolean;
+        };
         DynamicSearchRuleUpdateRequest: {
             /** @description Human-readable description of the dynamic search rule. */
             description?: string | null;
@@ -3095,6 +3159,40 @@ export interface components {
             active?: boolean | null;
             conditions?: null | components["schemas"]["Conditions"];
             actions?: null | components["schemas"]["RuleActions"];
+        };
+        DynamicSearchRules: {
+            /** @description Rules for the current page. */
+            results: components["schemas"]["DynamicSearchRuleNeedsProcessing"][];
+            /** @description Number of rules skipped. */
+            offset: number;
+            /** @description Maximum number of rules returned in a single request. */
+            limit: number;
+            /** @description Total number of rules that match the filter. */
+            total: number;
+            /**
+             * @description Total number of declared rules, including those that don't match the filter.
+             *
+             *     Returned when `showTarget` is present and set to `true` in the request.
+             */
+            totalRuleCount?: number | null;
+            /**
+             * @description Total number of declared rules after processing all pending tasks.
+             *
+             *     Returned when `showTarget` is present and set to `true` in the request.
+             */
+            targetTotalRuleCount?: number | null;
+            /**
+             * @description Whether the dynamic search rules have at least a pending task to process.
+             *
+             *     Returned when `showTarget` is present and set to `true` in the request.
+             */
+            needsProcessing?: boolean | null;
+            /**
+             * @description The [`uid`](https://www.meilisearch.com/docs/reference/api/async-task-management/list-tasks#response-results-items-uid)s of the pending tasks to process.
+             *
+             *     Returned when `showTarget` is present and set to `true` in the request.
+             */
+            taskUids?: components["schemas"]["u32"][] | null;
         };
         /** @enum {string} */
         EmbedderSource: "openAi" | "huggingFace" | "ollama" | "userProvided" | "rest" | "composite";
@@ -3957,6 +4055,14 @@ export interface components {
             /** @description Maximum number of rules to return. Default to 20. */
             limit?: number;
             filter?: null | components["schemas"]["ListRulesFilter"];
+            /**
+             * @description Show the target state of the dynamic search rules.
+             *
+             *     - Enabling this boolean adds additional information about the future state of the
+             *     dynamic search rules in the response, such as whether there are pending dynamic search rules tasks or not.
+             *     - Enabling this boolean requires the Enterprise Edition.
+             */
+            showTarget?: boolean;
         };
         ListRulesFilter: {
             /** @description Only include rules whose names match these patterns (e.g. `["black-friday", "promo*"]`). */
@@ -4298,41 +4404,6 @@ export interface components {
              * @example 1000
              */
             maxTotalHits: number | null;
-        };
-        PaginationView_DynamicSearchRule: {
-            /** @description Items for the current page. */
-            results: {
-                /** @description Unique identifier of the dynamic search rule. */
-                uid: components["schemas"]["IndexUid"];
-                /** @description Human-readable description of the dynamic search rule. */
-                description?: string | null;
-                /**
-                 * Format: date-time
-                 * @description Date time of the last update of this rule.
-                 */
-                lastUpdatedAt?: string | null;
-                /**
-                 * Format: u-int64
-                 * @description Precedence of the dynamic search rule. Lower numeric values take precedence over higher
-                 *     ones. If omitted, the rule is treated as having the lowest precedence. This precedence is
-                 *     used to resolve conflicts between matching rules:
-                 *     - If the same document is selected by multiple rules, the smallest `priority` number wins
-                 *     - If different documents are pinned to the same position, they are ordered by ascending `priority`
-                 */
-                precedence?: number | null;
-                /** @description Whether the dynamic search rule is active. */
-                active?: boolean;
-                /** @description Conditions that must match before the dynamic search rule applies. */
-                conditions?: components["schemas"]["Conditions"];
-                /** @description Actions to apply when the dynamic search rule matches. */
-                actions?: components["schemas"]["RuleActions"];
-            }[];
-            /** @description Number of items skipped. */
-            offset: number;
-            /** @description Maximum number of items returned. */
-            limit: number;
-            /** @description Total number of items matching the query. */
-            total: number;
         };
         PaginationView_Field: {
             /** @description Items for the current page. */
@@ -5686,6 +5757,12 @@ export interface components {
             typoTolerance: null | components["schemas"]["TypoSettings"];
             /**
              * @default {
+             *       "enabled": true
+             *     }
+             */
+            wordPosition: null | components["schemas"]["WordPositionSettings"];
+            /**
+             * @default {
              *       "maxValuesPerFacet": 100,
              *       "sortFacetValuesBy": {
              *         "*": "alpha"
@@ -5908,6 +5985,12 @@ export interface components {
              *     }
              */
             typoTolerance: null | components["schemas"]["TypoSettings"];
+            /**
+             * @default {
+             *       "enabled": true
+             *     }
+             */
+            wordPosition: null | components["schemas"]["WordPositionSettings"];
             /**
              * @default {
              *       "maxValuesPerFacet": 100,
@@ -6485,6 +6568,15 @@ export interface components {
             uuid: string;
             /** @description Whether the webhook can be edited. */
             isEditable: boolean;
+        };
+        /** @description Word position: how position of words in fields are handled. */
+        WordPositionSettings: {
+            /**
+             * @description When true, the position of words in documents fields is taken into account.
+             * @default true
+             * @example true
+             */
+            enabled: boolean | null;
         };
         /** Format: u-int32 */
         u32: number;
@@ -7434,7 +7526,7 @@ export interface operations {
                      *       "total": 1
                      *     }
                      */
-                    "application/json": components["schemas"]["PaginationView_DynamicSearchRule"];
+                    "application/json": components["schemas"]["DynamicSearchRules"];
                 };
             };
             /** @description The authorization header is missing. */
@@ -7689,6 +7781,96 @@ export interface operations {
                      *       "code": "missing_authorization_header",
                      *       "type": "auth",
                      *       "link": "https://docs.meilisearch.com/errors#missing_authorization_header"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ResponseError"];
+                };
+            };
+        };
+    };
+    get_target_rule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Unique identifier of the search rule.
+                 * @example black-friday
+                 */
+                uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dynamic search rule target returned. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "current": {
+                     *         "description": "Black Friday 2025 rules",
+                     *         "precedence": 10,
+                     *         "active": true,
+                     *         "conditions": {
+                     *           "query": {
+                     *             "isEmpty": true
+                     *           },
+                     *           "time": {
+                     *             "start": "2025-11-28T00:00:00Z",
+                     *             "end": "2025-11-28T23:59:59Z"
+                     *           }
+                     *         },
+                     *         "actions": {
+                     *           "pin": [
+                     *             {
+                     *               "indexUid": "products",
+                     *               "id": "123",
+                     *               "position": 1
+                     *             }
+                     *           ]
+                     *         }
+                     *       },
+                     *       "target": {},
+                     *       "taskUids": [],
+                     *       "needsProcessing": false
+                     *     }
+                     */
+                    "application/json": components["schemas"]["DynamicSearchRuleTarget"];
+                };
+            };
+            /** @description The authorization header is missing. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "The Authorization header is missing. It must use the bearer authorization method.",
+                     *       "code": "missing_authorization_header",
+                     *       "type": "auth",
+                     *       "link": "https://docs.meilisearch.com/errors#missing_authorization_header"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ResponseError"];
+                };
+            };
+            /** @description Dynamic search rule does not currently exist, and no task will create it. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "Dynamic search rule `black-friday` not found.",
+                     *       "code": "dynamic_search_rule_not_found",
+                     *       "type": "invalid_request",
+                     *       "link": "https://docs.meilisearch.com/errors#dynamic_search_rule_not_found"
                      *     }
                      */
                     "application/json": components["schemas"]["ResponseError"];
@@ -9990,6 +10172,9 @@ export interface operations {
                      *           "title"
                      *         ],
                      *         "disableOnNumbers": false
+                     *       },
+                     *       "wordPosition": {
+                     *         "enabled": true
                      *       },
                      *       "faceting": {
                      *         "maxValuesPerFacet": 100,
@@ -14804,6 +14989,215 @@ export interface operations {
                  *     }
                  */
                 "application/json": components["schemas"]["TypoSettings"];
+            };
+        };
+        responses: {
+            /** @description Task successfully enqueued. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "taskUid": 147,
+                     *       "indexUid": "movies",
+                     *       "status": "enqueued",
+                     *       "type": "settingsUpdate",
+                     *       "enqueuedAt": "2024-08-08T17:05:55.791772Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["SummarizedTaskView"];
+                };
+            };
+            /** @description The authorization header is missing. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "The Authorization header is missing. It must use the bearer authorization method.",
+                     *       "code": "missing_authorization_header",
+                     *       "type": "auth",
+                     *       "link": "https://docs.meilisearch.com/errors#missing_authorization_header"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ResponseError"];
+                };
+            };
+            /** @description Index not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "Index `movies` not found.",
+                     *       "code": "index_not_found",
+                     *       "type": "invalid_request",
+                     *       "link": "https://docs.meilisearch.com/errors#index_not_found"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ResponseError"];
+                };
+            };
+        };
+    };
+    getwordPosition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Unique identifier of the index.
+                 * @example movies
+                 */
+                index_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns the current value of the `wordPosition` setting. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {} */
+                    "application/json": components["schemas"]["WordPositionSettings"];
+                };
+            };
+            /** @description The authorization header is missing. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "The Authorization header is missing. It must use the bearer authorization method.",
+                     *       "code": "missing_authorization_header",
+                     *       "type": "auth",
+                     *       "link": "https://docs.meilisearch.com/errors#missing_authorization_header"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ResponseError"];
+                };
+            };
+            /** @description Index not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "Index `movies` not found.",
+                     *       "code": "index_not_found",
+                     *       "type": "invalid_request",
+                     *       "link": "https://docs.meilisearch.com/errors#index_not_found"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ResponseError"];
+                };
+            };
+        };
+    };
+    deletewordPosition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Unique identifier of the index.
+                 * @example movies
+                 */
+                index_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Task successfully enqueued. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "taskUid": 147,
+                     *       "indexUid": "movies",
+                     *       "status": "enqueued",
+                     *       "type": "settingsUpdate",
+                     *       "enqueuedAt": "2024-08-08T17:05:55.791772Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["SummarizedTaskView"];
+                };
+            };
+            /** @description The authorization header is missing. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "The Authorization header is missing. It must use the bearer authorization method.",
+                     *       "code": "missing_authorization_header",
+                     *       "type": "auth",
+                     *       "link": "https://docs.meilisearch.com/errors#missing_authorization_header"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ResponseError"];
+                };
+            };
+            /** @description Index not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "Index `movies` not found.",
+                     *       "code": "index_not_found",
+                     *       "type": "invalid_request",
+                     *       "link": "https://docs.meilisearch.com/errors#index_not_found"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ResponseError"];
+                };
+            };
+        };
+    };
+    patchwordPosition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Unique identifier of the index.
+                 * @example movies
+                 */
+                index_uid: string;
+            };
+            cookie?: never;
+        };
+        /** @description The new value for the `wordPosition` setting. Send `null` to reset it to its default value. */
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "enabled": true
+                 *     }
+                 */
+                "application/json": components["schemas"]["WordPositionSettings"];
             };
         };
         responses: {

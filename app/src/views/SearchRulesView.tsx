@@ -12,7 +12,28 @@ interface Rule {
   lastUpdatedAt?: string | null;
   conditions?: unknown;
   actions?: unknown;
+  needsProcessing?: boolean | null;
 }
+
+interface RulePage {
+  results: Rule[];
+  total: number;
+  // Only with showTarget (Enterprise Edition).
+  totalRuleCount?: number | null;
+  targetTotalRuleCount?: number | null;
+  needsProcessing?: boolean | null;
+  taskUids?: number[] | null;
+}
+
+interface RuleTarget {
+  current?: Record<string, unknown> | null;
+  target?: Record<string, unknown> | null;
+  taskUids: number[];
+  needsProcessing: boolean;
+}
+
+// `target` only lists the fields pending tasks will change, so overlay it on `current`.
+const targetState = (t: RuleTarget) => (t.target === null ? null : { ...(t.current ?? {}), ...(t.target ?? {}) });
 
 const TEMPLATE = {
   description: "Pin a promoted product for 'black friday' searches",
@@ -30,14 +51,24 @@ export default function SearchRulesView() {
   const [offset, setOffset] = createSignal(0);
   const [editing, setEditing] = createSignal<{ uid: string; isNew: boolean; text: string }>();
   const [confirm, setConfirm] = createSignal<{ kind: "one"; uid: string } | { kind: "all" }>();
+  const [showTarget, setShowTarget] = createSignal(false);
+  const [target, setTarget] = createSignal<{ uid: string; data: RuleTarget }>();
 
   const [page, { refetch }] = createResource(
-    () => ({ q: query(), a: activeOnly(), o: offset() }),
-    ({ q, a, o }) =>
-      api().req<{ results: Rule[]; total: number }>("POST", "/dynamic-search-rules", {
-        body: { offset: o, limit: PAGE, filter: q || a ? { query: q || null, active: a ? a === "true" : null } : null },
+    () => ({ q: query(), a: activeOnly(), o: offset(), t: showTarget() }),
+    ({ q, a, o, t }) =>
+      api().req<RulePage>("POST", "/dynamic-search-rules", {
+        body: { offset: o, limit: PAGE, filter: q || a ? { query: q || null, active: a ? a === "true" : null } : null, ...(t ? { showTarget: true } : {}) },
       }),
   );
+
+  const openTarget = async (uid: string) => {
+    try {
+      setTarget({ uid, data: await api().req<RuleTarget>("GET", "/dynamic-search-rules/{uid}/target", { path: { uid } }) });
+    } catch (e) {
+      notifyError(e);
+    }
+  };
 
   const open = async (uid?: string) => {
     if (!uid) return setEditing({ uid: "", isNew: true, text: pretty(TEMPLATE) });
@@ -85,7 +116,20 @@ export default function SearchRulesView() {
           <option value="true">Active only</option>
           <option value="false">Inactive only</option>
         </select>
+        <label class="check" title="Include the effect of pending rule tasks (showTarget). Requires the Enterprise Edition.">
+          <input type="checkbox" checked={showTarget()} onChange={(e) => (setOffset(0), setShowTarget(e.currentTarget.checked))} /> Show pending
+        </label>
         <span class="grow" />
+        <Show when={showTarget() && !page.error && page()}>
+          {(p) => (
+            <span class="muted small" title={p().taskUids?.length ? `Pending tasks: ${p().taskUids!.join(", ")}` : undefined}>
+              <Show when={p().needsProcessing} fallback="no pending tasks">
+                <span class="pill status-enqueued">{formatNumber(p().taskUids?.length ?? 0)} pending</span>{" "}
+                {formatNumber(p().totalRuleCount ?? undefined)} → {formatNumber(p().targetTotalRuleCount ?? undefined)} rules ·
+              </Show>
+            </span>
+          )}
+        </Show>
         <span class="muted small">{formatNumber(page.error ? undefined : page()?.total)} rules</span>
         <button disabled={offset() === 0} onClick={() => setOffset(Math.max(0, offset() - PAGE))}>
           ‹
@@ -110,12 +154,28 @@ export default function SearchRulesView() {
             <For each={page()?.results ?? []} fallback={<tr><td colspan="6" class="muted">No rules</td></tr>}>
               {(r) => (
                 <tr class="clickable" onClick={() => open(r.uid)}>
-                  <td class="mono">{r.uid}</td>
+                  <td class="mono">
+                    {r.uid}
+                    <Show when={r.needsProcessing}>
+                      {" "}
+                      <span class="pill status-enqueued" title="Pending tasks will change this rule">pending</span>
+                    </Show>
+                  </td>
                   <td>{r.description}</td>
                   <td class="num">{r.precedence ?? "—"}</td>
                   <td>{r.active === false ? <span class="muted">no</span> : "yes"}</td>
                   <td class="small">{formatDate(r.lastUpdatedAt)}</td>
-                  <td>
+                  <td class="nowrap">
+                    <button
+                      class="link small"
+                      title="State after all pending tasks for this rule are processed. Requires the Enterprise Edition."
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openTarget(r.uid);
+                      }}
+                    >
+                      target
+                    </button>{" "}
                     <button
                       class="link small err"
                       onClick={(e) => {
@@ -160,6 +220,22 @@ export default function SearchRulesView() {
             conditions: query (words, isEmpty) · time (start, end) · filter. actions: pin [{"{"}id, position, indexUid?{"}"}] · scale [{"{"}weight, ids? | filter?{"}"}] (weight &gt;1 boosts, &lt;1 demotes, 0 hides).
           </p>
         </Modal>
+      </Show>
+      <Show when={target()}>
+        {(t) => (
+          <Modal title={`Target state of ${t().uid}`} onClose={() => setTarget(undefined)} wide actions={<button onClick={() => setTarget(undefined)}>Close</button>}>
+            <p class="muted small">
+              <Show when={t().data.needsProcessing} fallback="No pending tasks: the target state is the current state.">
+                Pending tasks {t().data.taskUids.join(", ")} will change this rule.{" "}
+                {t().data.current === null ? "The rule doesn't exist yet. " : ""}
+                {t().data.target === null ? "The rule will be deleted." : "Highlighted lines are the changes."}
+              </Show>
+            </p>
+            <div class="editor-box">
+              <JsonEditor value={pretty(targetState(t().data))} original={pretty(t().data.current ?? null)} readOnly />
+            </div>
+          </Modal>
+        )}
       </Show>
       <Show when={confirm()}>
         <Confirm

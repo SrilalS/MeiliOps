@@ -15,6 +15,8 @@ The request is edited as JSON, starting from a working template, and the results
 
 Dynamic search rules pin, boost or demote documents for matching queries, without touching your data or settings. Create, edit and delete rules here.
 
+Rule changes are tasks, so a rule can lag behind what you saved. On the Enterprise Edition, click **target** on a rule to see the state it will have once its pending tasks are processed, with the changes highlighted, and tick **Show pending** to mark rules with pending tasks and see how the rule count will change. The Community Edition answers both with a `requires_enterprise_edition` error.
+
 Search rules are an experimental Meilisearch feature. If it's off, the screen offers a button to enable it under **Experimental**.
 
 ## Chats
