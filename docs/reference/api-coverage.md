@@ -2,16 +2,16 @@
 
 MeiliOps aims to cover **100% of Meilisearch's stable API** for the latest stable release. Coverage is measured, not estimated: `npm run coverage` scans the source for every API call and compares it with the operations in Meilisearch's published OpenAPI spec.
 
-**Meilisearch 1.56.0: 143 operations. 140 have a dedicated screen (97.9%); all 143 are reachable from the API console.**
+**Meilisearch 1.58.0: 147 operations. 144 have a dedicated screen (98.0%); all 147 are reachable from the API console.**
 
 | Area (OpenAPI tag) | Operations | Where in MeiliOps |
 |---|---|---|
-| Settings | 69 | Index **Settings** tab (every sub-route, plus *All settings*) |
+| Settings | 72 | Index **Settings** tab (every sub-route, plus *All settings*) |
 | Async task management | 10 | **Tasks**, **Batches**, Activity |
 | Documents | 10 | **Documents** tab, *Edit with function* |
 | Indexes | 9 | Sidebar, **Index info** tab (create, rename, primary key, swap, compact, delete) |
 | Chats | 7 | **Chats** |
-| Search rules | 5 | **Search rules** |
+| Search rules | 6 | **Search rules** (including each rule's *target* state) |
 | Experimental features | 5 | **Experimental**; the 3 `/network` routes are console-only (see below) |
 | Keys | 5 | **API keys** |
 | Webhooks | 5 | **Webhooks** |

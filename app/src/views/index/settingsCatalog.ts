@@ -38,6 +38,7 @@ export const SETTINGS: SettingDef[] = [
   setting("stopWords", "PUT", "stop-words", "Relevancy", "Words ignored at search time.", { reindex: true }),
   setting("proximityPrecision", "PUT", "proximity-precision", "Relevancy", "byWord or byAttribute.", { reindex: true }),
   setting("searchCutoffMs", "PUT", "search-cutoff-ms", "Relevancy", "Max search time budget in ms."),
+  setting("wordPosition", "PATCH", "word-position", "Relevancy", "Compute word positions while indexing ({ enabled }). Disabling speeds up indexing but skips the wordPosition rule and weakens attribute and exactness ranking.", { reindex: true }),
 
   setting("dictionary", "PUT", "dictionary", "Tokenization", "Custom words treated as single tokens.", { reindex: true }),
   setting("separatorTokens", "PUT", "separator-tokens", "Tokenization", "Extra word separators.", { reindex: true }),
