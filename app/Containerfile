@@ -2,8 +2,12 @@
 # Meilisearch with keys from the environment. See docs/guide/hosted.md.
 #
 #   podman build -t meiliops-web -f Containerfile .      (from app/)
+#
+# Published by .github/workflows/release.yml as ghcr.io/srilals/meiliops-web for amd64 and arm64.
 
-FROM docker.io/library/node:24-alpine AS build
+# The build output (JS, HTML, CSS) is the same for every CPU, so this stage runs on the build
+# machine's own platform: a multi-arch build only emulates the small runtime stage below.
+FROM --platform=$BUILDPLATFORM docker.io/library/node:24-alpine AS build
 WORKDIR /src
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund

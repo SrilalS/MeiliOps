@@ -45,8 +45,9 @@ spec:
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: meiliops
-          # Build from app/ (podman build -f Containerfile .) and push to your registry.
-          image: registry.example.com/meiliops-web:0.5.0
+          # Published with every release from v0.5.1 (amd64 and arm64). Pin a version; mirror it to
+          # your own registry if your cluster pulls only from there.
+          image: ghcr.io/srilals/meiliops-web:0.5.1
           ports:
             - { name: http, containerPort: 8080 }
           env:

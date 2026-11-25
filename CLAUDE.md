@@ -22,7 +22,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/server/` | Hosted mode server (Node, no dependencies): serves the web build, proxies `/api/servers/<id>/*` to Meilisearch adding the key from env, built-in OIDC sign-in (`auth.ts`, like Temporal UI's `TEMPORAL_AUTH_*`), `MEILIOPS_PUBLIC_PATH`, audit log. `npm run build:web` builds it with the app into `dist-server/` |
 | `app/scripts/mock-oidc.mjs`, `test-hosted-auth.mjs` | Test-only OIDC provider and the end-to-end sign-in checks (27) against it. Setup in `docs/guide/hosted.md` |
 | `app/src/lib/hosted.ts` | `hosted` flag (`vite build --mode hosted`), loads the server list from `/api/config` |
-| `app/Containerfile`, `deploy/kubernetes/` | Hosted image (~80 MB) and manifests; `kind-test.yaml` runs MeiliOps with Meilisearch 1.58 and 1.18 |
+| `app/Containerfile`, `deploy/kubernetes/` | Hosted image (~80 MB) and manifests; `kind-test.yaml` runs MeiliOps with Meilisearch 1.58 and 1.18. The build stage runs on `$BUILDPLATFORM` (its output is CPU-independent), so multi-arch builds only emulate the runtime stage |
 | `app/src/lib/compat.ts` | Version gating: `supports`/`needs`/`settingMissing`, `MIN_VERSION`; `components/Requires.tsx` gates a whole screen |
 | `app/src/state/app.ts` | Connections, active client, task tracking (`trackTask`), toasts |
 | `app/src/state/instances.ts` | Local instance manager: side-by-side native versions (`bin/<version>/`), Docker/Podman containers, start/stop, launch flags, data-version tracking |
@@ -37,7 +37,7 @@ No AI-DLC or other process frameworks: plan briefly, build, verify.
 | `app/scripts/coverage.mjs` | API coverage report (`npm run coverage`, `--strict` for CI) |
 | `app/scripts/measure-memory.ps1` | Memory of the whole process tree |
 | `.github/workflows/ci.yml` | Push/PR: typecheck + `coverage --strict` only (no app builds) |
-| `.github/workflows/release.yml` | Tag `v*`: checks, draft release, builds (Windows NSIS, macOS arm64 + x64 DMG, Linux deb/rpm/AppImage), then publishes |
+| `.github/workflows/release.yml` | Tag `v*`: checks, draft release, builds (Windows NSIS, macOS arm64 + x64 DMG, Linux deb/rpm/AppImage), then the hosted image (`ghcr.io/srilals/meiliops-web`, amd64 + arm64), then publishes |
 | `.github/scripts/updater-manifest.mjs` | Writes the updater feed `latest.json` in the release's publish job (`--test` checks the file-name mapping) |
 | `.github/workflows/rust-cache.yml` | Keeps a compiled Rust dependency cache on `main` (on `Cargo.lock` changes + weekly) so releases start warm. Builds nothing that ships |
 | `.github/workflows/docs.yml` | Builds `docs/` (VitePress) and deploys it to GitHub Pages on changes to `main` |
